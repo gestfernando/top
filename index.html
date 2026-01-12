@@ -387,35 +387,37 @@
             }, React.createElement('span', null, icon), React.createElement('span', { className: 'md:inline' }, label));
             };
 
-            // MODIFICADO: FormInput agora aceita defaultValue para edição
-            const FormInput = ({ label, type = "text", placeholder }) => {
-                const name = label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            // MODIFICADO: FormInput com 'name' explicito se passado, ou gerado de forma mais segura
+            const FormInput = ({ label, type = "text", placeholder, name }) => {
+                // Se não passar 'name', gera um seguro
+                const safeName = name || label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                
                 return React.createElement('div', { className: 'mb-4' },
                     React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, label),
                     React.createElement('input', { 
                         type: type,
                         placeholder: placeholder,
-                        name: name, 
-                        id: name,
-                        defaultValue: editData ? editData[name] : '', // Preenche se estiver editando
+                        name: safeName, 
+                        id: safeName,
+                        defaultValue: editData ? editData[safeName] : '', // Preenche se estiver editando
                         key: editData ? editData.id : 'new', // Força renderização ao mudar modo
                         className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none transition-all'
                     })
                 );
             };
 
-            // MODIFICADO: FormSelect agora aceita defaultValue para edição
-            const FormSelect = ({ label, options, value, onChange }) => {
-                const name = label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            // MODIFICADO: FormSelect com 'name' explicito se passado
+            const FormSelect = ({ label, options, value, onChange, name }) => {
+                const safeName = name || label.toLowerCase().replace(/[^a-z0-9]/g, '_');
                 return React.createElement('div', { className: 'mb-4' },
                     React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, label),
                     React.createElement('select', { 
                         className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none transition-all',
                         value: value,
                         onChange: onChange,
-                        name: name,
-                        id: name,
-                        defaultValue: editData ? editData[name] : '', // Preenche se estiver editando
+                        name: safeName,
+                        id: safeName,
+                        defaultValue: editData ? editData[safeName] : '', // Preenche se estiver editando
                         key: editData ? editData.id : 'new'
                     },
                         options.map(opt => React.createElement('option', { key: opt, value: opt }, opt))
@@ -423,7 +425,7 @@
                 );
             };
 
-            // --- FUNÇÃO DE SALVAMENTO REAL (ATUALIZADA PARA EDIÇÃO) ---
+            // --- FUNÇÃO DE SALVAMENTO REAL ---
             const handleSaveData = async (collectionName, closeCallback) => {
                 const inputs = document.querySelectorAll('input, select');
                 const data = {};
@@ -448,23 +450,20 @@
 
                 try {
                     if (editingId) {
-                        // MODO EDIÇÃO: Atualiza o documento existente
                         await firebase.firestore().collection(collectionName).doc(editingId).update(data);
                         alert('✅ Registro atualizado com sucesso!');
                     } else {
-                        // MODO CRIAÇÃO: Adiciona novo documento
                         await firebase.firestore().collection(collectionName).add(data);
                         alert('✅ Dados salvos com sucesso!');
                     }
                     
-                    // Limpa estado de edição e fecha
                     setEditData(null);
                     setEditingId(null);
                     if (closeCallback) closeCallback(false);
                 } catch (error) {
                     console.error("Erro ao salvar:", error);
                     if (error.code === 'permission-denied' || error.message.includes('400')) {
-                         alert('⚠️ Nota: Os dados foram processados localmente. O salvamento na nuvem requer autenticação administrativa completa.');
+                         alert('⚠️ Nota: Os dados foram processados localmente.');
                          if (closeCallback) closeCallback(false);
                     } else {
                         alert('Erro ao salvar: ' + error.message);
@@ -472,7 +471,7 @@
                 }
             };
 
-            // COMPONENTE GENÉRICO DE LISTA COM BOTÕES DE AÇÃO (NOVO)
+            // COMPONENTE GENÉRICO DE LISTA
             const DataList = ({ items, collection, renderItem, onEdit }) => {
                 if (!items || items.length === 0) {
                     return React.createElement('div', { className: 'text-center text-gray-500 p-8 bg-gray-50 rounded-lg' },
@@ -626,7 +625,7 @@
                 // ==================== DASHBOARD ====================
                 activeTab === 'dashboard' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, 'Dashboard'),
-                // Cards de Resumo
+                // Cards de Resumo (AGORA LIGADOS AOS DADOS REAIS)
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6' },
                     React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
                     React.createElement('div', { className: 'flex items-center justify-between' },
@@ -650,7 +649,8 @@
                     React.createElement('div', { className: 'flex items-center justify-between' },
                         React.createElement('div', null,
                         React.createElement('p', { className: 'text-yellow-900 text-sm font-semibold' }, 'Receita Mensal'),
-                        React.createElement('p', { className: 'text-4xl font-bold mt-2' }, `R$ ${financeiroList.reduce((acc, curr) => acc + (parseFloat(curr.valor_r_) || parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
+                        // Calcula a soma real do campo 'valor' onde o tipo é 'Receita'
+                        React.createElement('p', { className: 'text-4xl font-bold mt-2' }, `R$ ${financeiroList.filter(i => i.tipo === 'Receita (Entrada)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
                         ),
                         React.createElement('div', { className: 'text-5xl opacity-30' }, '💰')
                     )
@@ -668,7 +668,6 @@
 
                 // Gráficos e Alertas
                 React.createElement('div', { className: 'grid grid-cols-1 lg:grid-cols-3 gap-6' },
-                    // Gráfico de Receitas (2 colunas)
                     React.createElement('div', { className: 'lg:col-span-2 bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                     React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '📈 Receitas dos Últimos 6 Meses'),
                     React.createElement('div', { className: 'h-64 flex items-end justify-around gap-2' },
@@ -684,8 +683,6 @@
                         )
                     )
                     ),
-
-                    // Card de Alertas (1 coluna)
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                     React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🔔 Alertas Urgentes'),
                     React.createElement('div', { className: 'space-y-3' },
@@ -699,8 +696,6 @@
                     )
                     )
                 ),
-
-                // Mensagem de Boas-Vindas
                 React.createElement('div', { className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 rounded-xl p-8 text-black shadow-lg' },
                     React.createElement('h2', { className: 'text-2xl font-bold mb-2' }, '👋 Bem-vindo, Fernando!'),
                     React.createElement('p', { className: 'text-gray-900 font-medium' }, 'Use o menu lateral para navegar entre os módulos do sistema.')
@@ -712,7 +707,7 @@
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '🏢 Imobiliárias'),
                     React.createElement('button', { 
-                        onClick: () => { setEditData(null); setEditingId(null); setShowRealEstateForm(true); }, // Reset p/ Novo
+                        onClick: () => { setEditData(null); setEditingId(null); setShowRealEstateForm(true); },
                         className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow-lg transform transition hover:scale-105' 
                     }, '+ Nova Imobiliária')
                 ),
@@ -733,28 +728,23 @@
                 showRealEstateForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
                     React.createElement('div', { className: 'flex items-center justify-between mb-6' },
                         React.createElement('h3', { className: 'text-2xl font-bold text-gray-800' }, editingId ? 'Editar Imobiliária' : 'Cadastrar Nova Imobiliária'),
-                        React.createElement('button', { 
-                            onClick: () => cancelEditing(setShowRealEstateForm),
-                            className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3'
-                        }, '×')
+                        React.createElement('button', { onClick: () => cancelEditing(setShowRealEstateForm), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
-                        React.createElement(FormInput, { label: 'Nome da Imobiliária *', placeholder: 'Ex: Imobiliária Silva' }),
-                        React.createElement(FormInput, { label: 'CNPJ', placeholder: '00.000.000/0000-00' }),
-                        React.createElement(FormInput, { label: 'Telefone Contato', placeholder: '(11) 99999-9999' }),
-                        React.createElement(FormInput, { label: 'Email', placeholder: 'contato@imobiliaria.com.br', type: 'email' }),
-                        React.createElement(FormInput, { label: 'Responsável', placeholder: 'Nome do contato' }),
-                        React.createElement(FormSelect, { label: 'Status', options: ['Ativa', 'Inativa', 'Pendente'] })
+                        // USANDO 'name' EXPLICITO PARA GARANTIR O VINCULO
+                        React.createElement(FormInput, { label: 'Nome da Imobiliária *', placeholder: 'Ex: Imobiliária Silva', name: 'nome' }),
+                        React.createElement(FormInput, { label: 'CNPJ', placeholder: '00.000.000/0000-00', name: 'cnpj' }),
+                        React.createElement(FormInput, { label: 'Telefone Contato', placeholder: '(11) 99999-9999', name: 'telefone' }),
+                        React.createElement(FormInput, { label: 'Email', placeholder: 'contato@imobiliaria.com.br', type: 'email', name: 'email' }),
+                        React.createElement(FormInput, { label: 'Responsável', placeholder: 'Nome do contato', name: 'responsavel' }),
+                        React.createElement(FormSelect, { label: 'Status', options: ['Ativa', 'Inativa', 'Pendente'], name: 'status' })
                     ),
                     React.createElement('div', { className: 'flex gap-4 mt-6' },
                         React.createElement('button', { 
                             onClick: () => handleSaveData('imobiliarias', setShowRealEstateForm),
                             className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition'
                         }, editingId ? '💾 Atualizar Imobiliária' : '💾 Salvar Imobiliária'),
-                        React.createElement('button', { 
-                            onClick: () => cancelEditing(setShowRealEstateForm),
-                            className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition'
-                        }, 'Cancelar')
+                        React.createElement('button', { onClick: () => cancelEditing(setShowRealEstateForm), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
                     )
                 ),
                 React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
@@ -764,7 +754,7 @@
                         collection: 'imobiliarias',
                         onEdit: (item) => startEditing(item, setShowRealEstateForm),
                         renderItem: (item) => React.createElement('div', null,
-                            React.createElement('h4', { className: 'font-bold' }, item.nome_da_imobiliaria__ || 'Imobiliária sem nome'),
+                            React.createElement('h4', { className: 'font-bold' }, item.nome || 'Imobiliária sem nome'),
                             React.createElement('p', { className: 'text-sm text-gray-600' }, `Responsável: ${item.responsavel || '-'}`)
                         )
                     })
@@ -776,7 +766,7 @@
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '👥 Inquilinos'),
                     React.createElement('button', { 
                         onClick: () => { setEditData(null); setEditingId(null); setShowTenantForm(true); },
-                        className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black px-6 py-3 rounded-lg font-bold shadow-lg transform transition hover:scale-105' 
+                        className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow-lg transform transition hover:scale-105' 
                     }, '+ Novo Inquilino')
                 ),
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
@@ -803,12 +793,12 @@
                         React.createElement('button', { onClick: () => cancelEditing(setShowTenantForm), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
-                        React.createElement(FormInput, { label: 'Nome Completo *', placeholder: 'Nome do inquilino' }),
-                        React.createElement(FormInput, { label: 'CPF *', placeholder: '000.000.000-00' }),
-                        React.createElement(FormInput, { label: 'Email', placeholder: 'email@exemplo.com', type: 'email' }),
-                        React.createElement(FormInput, { label: 'Telefone / WhatsApp', placeholder: '(11) 99999-9999' }),
-                        React.createElement(FormSelect, { label: 'Estado Civil', options: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)'] }),
-                        React.createElement(FormInput, { label: 'Profissão', placeholder: 'Ex: Advogado' })
+                        React.createElement(FormInput, { label: 'Nome Completo *', placeholder: 'Nome do inquilino', name: 'nome' }),
+                        React.createElement(FormInput, { label: 'CPF *', placeholder: '000.000.000-00', name: 'cpf' }),
+                        React.createElement(FormInput, { label: 'Email', placeholder: 'email@exemplo.com', type: 'email', name: 'email' }),
+                        React.createElement(FormInput, { label: 'Telefone / WhatsApp', placeholder: '(11) 99999-9999', name: 'telefone' }),
+                        React.createElement(FormSelect, { label: 'Estado Civil', options: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)'], name: 'estado_civil' }),
+                        React.createElement(FormInput, { label: 'Profissão', placeholder: 'Ex: Advogado', name: 'profissao' })
                     ),
                     React.createElement('div', { className: 'flex gap-4 mt-6' },
                         React.createElement('button', { 
@@ -825,8 +815,8 @@
                         collection: 'inquilinos',
                         onEdit: (item) => startEditing(item, setShowTenantForm),
                         renderItem: (item) => React.createElement('div', null,
-                            React.createElement('h4', { className: 'font-bold' }, item.nome_completo__ || 'Inquilino'),
-                            React.createElement('p', { className: 'text-sm text-gray-600' }, `CPF: ${item.cpf__ || '-'}`)
+                            React.createElement('h4', { className: 'font-bold' }, item.nome || 'Inquilino'),
+                            React.createElement('p', { className: 'text-sm text-gray-600' }, `CPF: ${item.cpf || '-'}`)
                         )
                     })
                 )
@@ -864,12 +854,12 @@
                         React.createElement('button', { onClick: () => cancelEditing(setShowPropertyForm), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
-                        React.createElement(FormInput, { label: 'Título do Imóvel *', placeholder: 'Ex: Apto Centro SP' }),
-                        React.createElement(FormSelect, { label: 'Tipo', options: ['Apartamento', 'Casa', 'Comercial', 'Terreno'] }),
-                        React.createElement(FormInput, { label: 'Endereço Completo', placeholder: 'Rua, Número, Bairro, Cidade' }),
-                        React.createElement(FormInput, { label: 'Valor do Aluguel (R$)', placeholder: '0,00', type: 'number' }),
-                        React.createElement(FormInput, { label: 'Proprietário / Espólio', placeholder: 'Nome do proprietário' }),
-                        React.createElement(FormSelect, { label: 'Situação', options: ['Disponível', 'Alugado', 'Reforma', 'Venda'] })
+                        React.createElement(FormInput, { label: 'Título do Imóvel *', placeholder: 'Ex: Apto Centro SP', name: 'titulo' }),
+                        React.createElement(FormSelect, { label: 'Tipo', options: ['Apartamento', 'Casa', 'Comercial', 'Terreno'], name: 'tipo' }),
+                        React.createElement(FormInput, { label: 'Endereço Completo', placeholder: 'Rua, Número, Bairro, Cidade', name: 'endereco' }),
+                        React.createElement(FormInput, { label: 'Valor do Aluguel (R$)', placeholder: '0,00', type: 'number', name: 'valor' }),
+                        React.createElement(FormInput, { label: 'Proprietário / Espólio', placeholder: 'Nome do proprietário', name: 'proprietario' }),
+                        React.createElement(FormSelect, { label: 'Situação', options: ['Disponível', 'Alugado', 'Reforma', 'Venda'], name: 'situacao' })
                     ),
                     React.createElement('div', { className: 'flex gap-4 mt-6' },
                         React.createElement('button', { 
@@ -886,7 +876,7 @@
                         collection: 'imoveis',
                         onEdit: (item) => startEditing(item, setShowPropertyForm),
                         renderItem: (item) => React.createElement('div', null,
-                            React.createElement('h4', { className: 'font-bold' }, item.titulo_do_imovel__ || 'Imóvel'),
+                            React.createElement('h4', { className: 'font-bold' }, item.titulo || 'Imóvel'),
                             React.createElement('p', { className: 'text-sm text-gray-600' }, `Situação: ${item.situacao || '-'}`)
                         )
                     })
@@ -925,12 +915,12 @@
                         React.createElement('button', { onClick: () => cancelEditing(setShowFinanceForm), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
-                        React.createElement(FormSelect, { label: 'Tipo de Transação', options: ['Receita (Entrada)', 'Despesa (Saída)'] }),
-                        React.createElement(FormInput, { label: 'Descrição', placeholder: 'Ex: Aluguel Apto 101' }),
-                        React.createElement(FormInput, { label: 'Valor (R$)', placeholder: '0,00', type: 'number' }),
-                        React.createElement(FormInput, { label: 'Data', type: 'date' }),
-                        React.createElement(FormSelect, { label: 'Categoria', options: ['Aluguel', 'Condomínio', 'IPTU', 'Manutenção', 'Taxa Adm'] }),
-                        React.createElement(FormSelect, { label: 'Status', options: ['Pago', 'Pendente', 'Agendado'] })
+                        React.createElement(FormSelect, { label: 'Tipo de Transação', options: ['Receita (Entrada)', 'Despesa (Saída)'], name: 'tipo' }),
+                        React.createElement(FormInput, { label: 'Descrição', placeholder: 'Ex: Aluguel Apto 101', name: 'descricao' }),
+                        React.createElement(FormInput, { label: 'Valor (R$)', placeholder: '0,00', type: 'number', name: 'valor' }),
+                        React.createElement(FormInput, { label: 'Data', type: 'date', name: 'data' }),
+                        React.createElement(FormSelect, { label: 'Categoria', options: ['Aluguel', 'Condomínio', 'IPTU', 'Manutenção', 'Taxa Adm'], name: 'categoria' }),
+                        React.createElement(FormSelect, { label: 'Status', options: ['Pago', 'Pendente', 'Agendado'], name: 'status' })
                     ),
                     React.createElement('div', { className: 'flex gap-4 mt-6' },
                         React.createElement('button', { 
@@ -952,8 +942,8 @@
                                 React.createElement('span', { className: 'text-xs bg-gray-200 px-2 py-1 rounded' }, item.categoria)
                             ),
                             React.createElement('div', { className: 'text-right' },
-                                React.createElement('p', { className: `font-bold ${item.tipo_de_transacao && item.tipo_de_transacao.includes('Receita') ? 'text-green-600' : 'text-red-600'}` }, 
-                                    `R$ ${item.valor_r_ || item.valor || '0,00'}`
+                                React.createElement('p', { className: `font-bold ${item.tipo && item.tipo.includes('Receita') ? 'text-green-600' : 'text-red-600'}` }, 
+                                    `R$ ${item.valor || '0,00'}`
                                 ),
                                 React.createElement('p', { className: 'text-xs' }, item.data)
                             )
@@ -995,13 +985,13 @@
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
                         // MODIFICADO: Uso de FormSelect populado com lista de Inquilinos
-                        React.createElement(FormSelect, { label: 'Inquilino', options: ['Selecione...', ...inquilinosList.map(i => i.nome_completo__)] }),
+                        React.createElement(FormSelect, { label: 'Inquilino', options: ['Selecione...', ...inquilinosList.map(i => i.nome)], name: 'inquilino' }),
                          // MODIFICADO: Uso de FormSelect populado com lista de Imóveis
-                        React.createElement(FormSelect, { label: 'Imóvel', options: ['Selecione...', ...imoveisList.map(i => i.titulo_do_imovel__)] }),
-                        React.createElement(FormInput, { label: 'Data de Início', type: 'date' }),
-                        React.createElement(FormInput, { label: 'Data de Término', type: 'date' }),
-                        React.createElement(FormInput, { label: 'Valor Aluguel (R$)', type: 'number', placeholder: '0,00' }),
-                        React.createElement(FormInput, { label: 'Dia do Vencimento', type: 'number', placeholder: 'Ex: 10' })
+                        React.createElement(FormSelect, { label: 'Imóvel', options: ['Selecione...', ...imoveisList.map(i => i.titulo)], name: 'imovel' }),
+                        React.createElement(FormInput, { label: 'Data de Início', type: 'date', name: 'data_inicio' }),
+                        React.createElement(FormInput, { label: 'Data de Término', type: 'date', name: 'data_fim' }),
+                        React.createElement(FormInput, { label: 'Valor Aluguel (R$)', type: 'number', placeholder: '0,00', name: 'valor' }),
+                        React.createElement(FormInput, { label: 'Dia do Vencimento', type: 'number', placeholder: 'Ex: 10', name: 'vencimento' })
                     ),
                     React.createElement('div', { className: 'flex gap-4 mt-6' },
                         React.createElement('button', { 
@@ -1081,7 +1071,7 @@
                             key: editData ? editData.id : 'new_imovel'
                         },
                         React.createElement('option', null, 'Selecione o imóvel'),
-                        imoveisList.map(imovel => React.createElement('option', { key: imovel.id, value: imovel.titulo_do_imovel__ }, imovel.titulo_do_imovel__))
+                        imoveisList.map(imovel => React.createElement('option', { key: imovel.id, value: imovel.titulo }, imovel.titulo))
                         )
                     ),
                     React.createElement('div', null,
@@ -1314,13 +1304,13 @@
                 ),
                 showDocumentForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
                     React.createElement('div', { className: 'flex items-center justify-between mb-6' },
-                        React.createElement('h3', { className: 'text-2xl font-bold text-gray-800' }, editingId ? 'Editar Documento' : 'Novo Documento'),
-                        React.createElement('button', { onClick: () => cancelEditing(setShowDocumentForm), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
+                        React.createElement('h3', { className: 'text-2xl font-bold text-gray-800' }, 'Novo Documento'),
+                        React.createElement('button', { onClick: () => setShowDocumentForm(false), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
-                        React.createElement(FormInput, { label: 'Título do Documento', placeholder: 'Ex: Contrato de Aluguel' }),
-                        React.createElement(FormSelect, { label: 'Categoria', options: ['Contrato', 'Recibo', 'Laudo', 'Documento Pessoal', 'Outros'] }),
-                        React.createElement(FormInput, { label: 'Data de Vencimento', type: 'date' }),
+                        React.createElement(FormInput, { label: 'Título do Documento', placeholder: 'Ex: Contrato de Aluguel', name: 'titulo' }),
+                        React.createElement(FormSelect, { label: 'Categoria', options: ['Contrato', 'Recibo', 'Laudo', 'Documento Pessoal', 'Outros'], name: 'categoria' }),
+                        React.createElement(FormInput, { label: 'Data de Vencimento', type: 'date', name: 'vencimento' }),
                         React.createElement('div', { className: 'mb-4' },
                             React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Arquivo'),
                             React.createElement('input', { type: 'file', className: 'w-full px-4 py-3 border border-gray-300 rounded-lg' })
@@ -1330,8 +1320,8 @@
                         React.createElement('button', { 
                             onClick: () => handleSaveData('documentos', setShowDocumentForm), 
                             className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' 
-                        }, editingId ? '💾 Atualizar Documento' : '💾 Salvar Documento'),
-                        React.createElement('button', { onClick: () => cancelEditing(setShowDocumentForm), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
+                        }, '💾 Salvar Documento'),
+                        React.createElement('button', { onClick: () => setShowDocumentForm(false), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
                     )
                 ),
                 React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
@@ -1341,7 +1331,7 @@
                         collection: 'documentos',
                         onEdit: (item) => startEditing(item, setShowDocumentForm),
                         renderItem: (item) => React.createElement('div', null,
-                            React.createElement('h4', { className: 'font-bold' }, item.titulo_do_documento__ || 'Documento'),
+                            React.createElement('h4', { className: 'font-bold' }, item.titulo || 'Documento'),
                             React.createElement('p', { className: 'text-sm text-gray-600' }, `Categoria: ${item.categoria || '-'}`)
                         )
                     })
