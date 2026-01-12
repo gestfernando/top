@@ -366,14 +366,12 @@
                 closeModalFn(false);
             };
 
+            // MODIFICADO: Função deleteItem sem confirmação e alertas
             const deleteItem = async (collection, id) => {
-                if(confirm('Tem certeza que deseja excluir este registro permanentemente?')) {
-                    try {
-                        await firebase.firestore().collection(collection).doc(id).delete();
-                        alert('🗑️ Item excluído com sucesso!');
-                    } catch(e) {
-                        alert('Erro ao excluir: ' + e.message);
-                    }
+                try {
+                    await firebase.firestore().collection(collection).doc(id).delete();
+                } catch(e) {
+                    console.error('Erro ao excluir: ' + e.message);
                 }
             };
 
@@ -1391,6 +1389,7 @@
 
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
                     
+                    // NOVO: Card de Diagnóstico (SUBSTITUI PERFIL)
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                     React.createElement('div', { className: 'flex items-center justify-between mb-4' },
                         React.createElement('h3', { className: 'text-xl font-bold text-gray-800' }, '🛡️ Saúde do Sistema'),
@@ -1430,6 +1429,7 @@
                     )
                     ),
 
+                    // MELHORADO: Card de Sistema
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                     React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🔧 Sistema'),
                     React.createElement('div', { className: 'space-y-4' },
