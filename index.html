@@ -104,9 +104,9 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
     <!-- FIREBASE SDKs (Com 'defer' para não bloquear o carregamento offline) -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <!-- CSS Customizado - TOTALMENTE RESPONSIVO -->
     <style>
@@ -270,7 +270,7 @@
                 
                 // CORREÇÃO DO DELAY: HABILITAR PERSISTÊNCIA OFFLINE
                 // Isso permite que o app carregue os dados instantaneamente do cache local
-                firebase.firestore().enablePersistence({ synchronizeTabs: true })
+                firebase.firestore().enablePersistence({ synchronizeTabs: false })
                     .catch((err) => {
                         console.error("Erro na persistência:", err.code);
                     });
@@ -348,19 +348,16 @@
             React.useEffect(() => {
                 const init = async () => {
                     // --- CARREGAMENTO OTIMIZADO PARA SEM DELAY ---
-                    // A opção { includeMetadataChanges: true } é CRUCIAL para dados offline imediatos
                     
                     // 1. INICIAR LISTENERS IMEDIATAMENTE (Usa Cache Local primeiro)
                     const db = firebase.firestore();
-                    const options = { includeMetadataChanges: true }; // FORÇA O USO IMEDIATO DO CACHE
-
-                    db.collection('imobiliarias').onSnapshot(options, snap => setImobiliariasList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('inquilinos').onSnapshot(options, snap => setInquilinosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('imoveis').onSnapshot(options, snap => setImoveisList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('financeiro').onSnapshot(options, snap => setFinanceiroList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('contratos').onSnapshot(options, snap => setContratosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('espolios').onSnapshot(options, snap => setEspoliosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('documentos').onSnapshot(options, snap => setDocumentosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    db.collection('imobiliarias').onSnapshot(snap => setImobiliariasList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    db.collection('inquilinos').onSnapshot(snap => setInquilinosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    db.collection('imoveis').onSnapshot(snap => setImoveisList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    db.collection('financeiro').onSnapshot(snap => setFinanceiroList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    db.collection('contratos').onSnapshot(snap => setContratosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    db.collection('espolios').onSnapshot(snap => setEspoliosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    db.collection('documentos').onSnapshot(snap => setDocumentosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
 
                     // 2. TENTAR AUTENTICAR EM SEGUNDO PLANO (Não bloqueia a tela)
                     firebase.auth().signInAnonymously().catch(e => console.log("Modo Offline/Auth:", e));
@@ -1511,7 +1508,7 @@
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(React.createElement(App));
-      });
+      })();
     </script>
 </body>
 </html>
