@@ -345,6 +345,26 @@
                 setIsScanning(false);
             };
 
+            // Função Hard Reset (Nova Funcionalidade Solicitada)
+            const hardAppReset = async () => {
+                if (confirm("Limpar cache e forçar atualização? Isso recarregará o sistema.")) {
+                    try {
+                        if ('serviceWorker' in navigator) {
+                            const registrations = await navigator.serviceWorker.getRegistrations();
+                            for (let reg of registrations) { await reg.unregister(); }
+                        }
+                        if ('caches' in window) {
+                            const cacheNames = await caches.keys();
+                            await Promise.all(cacheNames.map(name => caches.delete(name)));
+                        }
+                        window.location.reload(true);
+                    } catch (e) { 
+                        console.error("Erro ao limpar.", e);
+                        alert("Erro ao tentar limpar o cache. Tente recarregar manualmente.");
+                    }
+                }
+            };
+
             React.useEffect(() => {
                 const init = async () => {
                     // --- CARREGAMENTO OTIMIZADO PARA SEM DELAY ---
@@ -1499,6 +1519,20 @@
                         React.createElement('span', { className: 'text-green-600 font-bold text-sm' }, '✓ Ativa (AES-256)')
                         )
                     )
+                    ),
+                    // NOVO: Card de Manutenção (COM BOTÃO DE HARD RESET)
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
+                        React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🛠️ Manutenção'),
+                        React.createElement('div', { className: 'space-y-4' },
+                            React.createElement('p', { className: 'text-sm text-gray-600' }, 'Utilize esta opção caso o sistema apresente falhas ou para receber novas atualizações. Isso limpará o cache local e forçará o recarregamento da aplicação.'),
+                            React.createElement('button', {
+                                onClick: hardAppReset,
+                                className: 'w-full bg-red-600 text-white px-4 py-4 rounded-lg font-bold text-sm hover:bg-red-700 transition shadow-lg flex items-center justify-center gap-2 transform hover:scale-[1.02]'
+                            }, 
+                                React.createElement('span', { className: 'text-lg' }, '🔄'),
+                                'LIMPAR CACHE E FORÇAR ATUALIZAÇÃO'
+                            )
+                        )
                     )
                 )
                 )
@@ -1508,7 +1542,7 @@
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(React.createElement(App));
-      })();
+      });
     </script>
 </body>
 </html>
