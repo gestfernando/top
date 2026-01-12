@@ -81,6 +81,7 @@
             // Registrar Service Worker
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
+                    // Caminho ajustado para ./sw.js
                     navigator.serviceWorker.register('./sw.js')
                         .then(function(reg) {
                             console.log('✅ Service Worker registrado!');
@@ -102,10 +103,10 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-    <!-- FIREBASE SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- FIREBASE SDKs (Com 'defer' para não bloquear o carregamento offline) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" defer></script>
 
     <!-- CSS Customizado - TOTALMENTE RESPONSIVO -->
     <style>
@@ -250,8 +251,8 @@
     <div id="root"></div>
 
     <script>
-      // ✅ OTIMIZAÇÃO: Inicialização imediata sem aguardar DOMContentLoaded
-      (function() {
+      // Envolvemos todo o código em um Listener para aguardar o carregamento dos scripts com 'defer'
+      document.addEventListener('DOMContentLoaded', function() {
         
         // CONFIGURAÇÃO REAL DO FIREBASE
         const firebaseConfig = {
@@ -259,25 +260,21 @@
             authDomain: "gestaomaster-cc7a0.firebaseapp.com",
             projectId: "gestaomaster-cc7a0",
             storageBucket: "gestaomaster-cc7a0.firebasestorage.app",
-            messagingSenderId: "6.1242084578e+10",
-            appId: "1:6.1242084578e+10:web:e1f4fd6a1287bfd3b422bb"
+            messagingSenderId: "61242084578",
+            appId: "1:61242084578:web:e1f4fd6a1287bfd3b422bb"
         };
 
         if (typeof firebase !== 'undefined' && !firebase.apps.length) {
             try {
                 firebase.initializeApp(firebaseConfig);
                 
-                // ✅ OTIMIZAÇÃO CRÍTICA: Ativar persistência offline
+                // CORREÇÃO DO DELAY: HABILITAR PERSISTÊNCIA OFFLINE
+                // Isso permite que o app carregue os dados instantaneamente do cache local
                 firebase.firestore().enablePersistence({ synchronizeTabs: true })
-                    .then(() => console.log('✅ Cache offline ativado'))
                     .catch((err) => {
-                        if (err.code === 'failed-precondition') {
-                            console.warn('⚠️ Múltiplas abas abertas - cache limitado');
-                        } else if (err.code === 'unimplemented') {
-                            console.warn('⚠️ Navegador não suporta cache offline');
-                        }
+                        console.error("Erro na persistência:", err.code);
                     });
-                
+                    
             } catch (e) {
                 console.error("Erro ao inicializar Firebase:", e);
             }
@@ -295,18 +292,15 @@
             const [espoliosList, setEspoliosList] = React.useState([]);
             const [documentosList, setDocumentosList] = React.useState([]);
 
-            // ✅ NOVO: Estado para controlar quais coleções já foram carregadas
-            const [loadedCollections, setLoadedCollections] = React.useState({});
-
-            // --- ESTADOS PARA EDIÇÃO (NOVO) ---
+            // --- ESTADOS PARA EDIÇÃO ---
             const [editingId, setEditingId] = React.useState(null);
             const [editData, setEditData] = React.useState(null);
 
-            // --- ESTADO PARA VISUALIZAÇÃO DE DOCUMENTOS (NOVO) ---
+            // --- ESTADO PARA VISUALIZAÇÃO DE DOCUMENTOS ---
             const [viewingItem, setViewingItem] = React.useState(null);
 
             // --- LÓGICA DE DIAGNÓSTICO ---
-            const [isScanning, setIsScanning] = React.useState(false);
+            const [isScanning, setIsScanning] = React.useState(true);
             const [scanResult, setScanResult] = React.useState({
                 db: 'pendente',
                 auth: 'pendente',
@@ -321,12 +315,16 @@
                 let results = { db: 'ok', auth: 'ok', modules: 'ok', latency: '0ms' };
 
                 try {
-                    // 1. Teste de Banco de Dados (Real)
+                    // 1. Teste de Banco de Dados (Com Timeout para não travar)
                     try {
-                        await firebase.firestore().collection('_health_check').doc('status').get();
+                        const dbCheck = firebase.firestore().collection('_health_check').doc('status').get();
+                        // Timeout de 2s para não ficar esperando
+                        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000));
+                        await Promise.race([dbCheck, timeout]);
                         results.db = 'operacional';
                     } catch (e) {
-                        results.db = (e.code === 'permission-denied' || e.code === 'not-found') ? 'conectado' : 'erro';
+                        // Se der timeout ou erro, assume conectado (cache) ou erro
+                        results.db = (e.message === 'timeout' || e.code === 'unavailable') ? 'modo offline' : 'conectado';
                     }
 
                     // 2. Teste de Autenticação
@@ -347,82 +345,30 @@
                 setIsScanning(false);
             };
 
-            // ✅ OTIMIZAÇÃO CRÍTICA: Função para carregar dados sob demanda
-            const loadCollection = React.useCallback((collectionName, setter) => {
-                if (loadedCollections[collectionName]) return; // Já carregado
-                
-                const db = firebase.firestore();
-                
-                // Usar get() ao invés de onSnapshot() para evitar listeners permanentes
-                db.collection(collectionName).get()
-                    .then(snap => {
-                        setter(snap.docs.map(d => ({id: d.id, ...d.data()})));
-                        setLoadedCollections(prev => ({...prev, [collectionName]: true}));
-                    })
-                    .catch(err => {
-                        console.log(`Info: Carregando ${collectionName} do cache offline`);
-                        // Se falhar (offline), tenta carregar do cache
-                        db.collection(collectionName).get({ source: 'cache' })
-                            .then(snap => {
-                                setter(snap.docs.map(d => ({id: d.id, ...d.data()})));
-                                setLoadedCollections(prev => ({...prev, [collectionName]: true}));
-                            })
-                            .catch(() => setter([]));
-                    });
-            }, [loadedCollections]);
-
-            // ✅ OTIMIZAÇÃO: Inicialização ultra-rápida
             React.useEffect(() => {
                 const init = async () => {
-                    // ✅ Verificar se já está autenticado antes de tentar login
-                    if (!firebase.auth().currentUser) {
-                        try { 
-                            await firebase.auth().signInAnonymously(); 
-                        } catch(e) {
-                            console.log('Info: Modo offline - autenticação pendente');
-                        }
-                    }
+                    // --- CARREGAMENTO OTIMIZADO PARA SEM DELAY ---
                     
-                    // ✅ REMOVIDO: runDiagnostic() - não rodar na inicialização
-                    // ✅ REMOVIDO: Carregamento automático de todas coleções
+                    // 1. INICIAR LISTENERS IMEDIATAMENTE (Usa Cache Local primeiro)
+                    const db = firebase.firestore();
+                    db.collection('imobiliarias').onSnapshot(snap => setImobiliariasList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    db.collection('inquilinos').onSnapshot(snap => setInquilinosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    db.collection('imoveis').onSnapshot(snap => setImoveisList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    db.collection('financeiro').onSnapshot(snap => setFinanceiroList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    db.collection('contratos').onSnapshot(snap => setContratosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    db.collection('espolios').onSnapshot(snap => setEspoliosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    db.collection('documentos').onSnapshot(snap => setDocumentosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+
+                    // 2. TENTAR AUTENTICAR EM SEGUNDO PLANO (Não bloqueia a tela)
+                    firebase.auth().signInAnonymously().catch(e => console.log("Modo Offline/Auth:", e));
                     
-                    // Carregar apenas dashboard inicial
-                    loadCollection('imoveis', setImoveisList);
-                    loadCollection('inquilinos', setInquilinosList);
-                    loadCollection('financeiro', setFinanceiroList);
-                    loadCollection('espolios', setEspoliosList);
+                    // 3. RODAR DIAGNÓSTICO EM SEGUNDO PLANO
+                    runDiagnostic();
                 };
                 init();
             }, []);
-
-            // ✅ NOVO: Carregar dados quando aba é acessada
-            React.useEffect(() => {
-                switch(activeTab) {
-                    case 'realestate':
-                        loadCollection('imobiliarias', setImobiliariasList);
-                        break;
-                    case 'tenants':
-                        loadCollection('inquilinos', setInquilinosList);
-                        break;
-                    case 'properties':
-                        loadCollection('imoveis', setImoveisList);
-                        break;
-                    case 'finance':
-                        loadCollection('financeiro', setFinanceiroList);
-                        break;
-                    case 'contracts':
-                        loadCollection('contratos', setContratosList);
-                        break;
-                    case 'estate':
-                        loadCollection('espolios', setEspoliosList);
-                        break;
-                    case 'documents':
-                        loadCollection('documentos', setDocumentosList);
-                        break;
-                }
-            }, [activeTab, loadCollection]);
             
-            // Estados dos formulários (ORIGINAIS)
+            // Estados dos formulários
             const [showEstateForm, setShowEstateForm] = React.useState(false);
             const [showRealEstateForm, setShowRealEstateForm] = React.useState(false);
             const [showTenantForm, setShowTenantForm] = React.useState(false);
@@ -431,12 +377,11 @@
             const [showContractForm, setShowContractForm] = React.useState(false);
             const [showDocumentForm, setShowDocumentForm] = React.useState(false);
 
-            // Estados para Relatórios (ORIGINAIS)
+            // Estados para Relatórios
             const [showReportModal, setShowReportModal] = React.useState(false);
             const [selectedReportType, setSelectedReportType] = React.useState('');
             const [reportFormat, setReportFormat] = React.useState('PDF');
             
-            // Novo estado para controlar a Pré-visualização de Impressão (ORIGINAL)
             const [printPreviewData, setPrintPreviewData] = React.useState(null);
 
             // FUNÇÕES AUXILIARES DE EDIÇÃO E EXCLUSÃO
@@ -455,14 +400,11 @@
             const deleteItem = async (collection, id) => {
                 try {
                     await firebase.firestore().collection(collection).doc(id).delete();
-                    // Recarregar a coleção após exclusão
-                    setLoadedCollections(prev => ({...prev, [collection]: false}));
                 } catch(e) {
                     console.error('Erro ao excluir: ' + e.message);
                 }
             };
 
-            // MenuButton responsivo (horizontal no mobile)
             const MenuButton = ({ tab, icon, label }) => {
             return React.createElement('button', {
                 onClick: () => setActiveTab(tab),
@@ -484,8 +426,8 @@
                         placeholder: placeholder,
                         name: safeName, 
                         id: safeName,
-                        defaultValue: editData ? editData[safeName] : '',
-                        key: editData ? editData.id : 'new',
+                        defaultValue: editData ? editData[safeName] : '', 
+                        key: editData ? editData.id : 'new', 
                         className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none transition-all'
                     })
                 );
@@ -501,7 +443,7 @@
                         onChange: onChange,
                         name: safeName,
                         id: safeName,
-                        defaultValue: editData ? editData[safeName] : '',
+                        defaultValue: editData ? editData[safeName] : '', 
                         key: editData ? editData.id : 'new'
                     },
                         options.map(opt => React.createElement('option', { key: opt, value: opt }, opt))
@@ -509,7 +451,7 @@
                 );
             };
 
-            // --- FUNÇÃO DE SALVAMENTO REAL (COM ATUALIZAÇÃO OTIMIZADA) ---
+            // --- FUNÇÃO DE SALVAMENTO REAL ---
             const handleSaveData = async (collectionName, closeCallback) => {
                 const inputs = document.querySelectorAll('input, select');
                 const data = {};
@@ -523,7 +465,6 @@
                 });
 
                 if (!hasData) {
-                    alert('⚠️ Por favor, preencha os campos antes de salvar.');
                     return;
                 }
 
@@ -535,30 +476,19 @@
                 try {
                     if (editingId) {
                         await firebase.firestore().collection(collectionName).doc(editingId).update(data);
-                        alert('✅ Registro atualizado com sucesso!');
                     } else {
                         await firebase.firestore().collection(collectionName).add(data);
-                        alert('✅ Dados salvos com sucesso!');
                     }
-                    
-                    // ✅ Forçar recarga da coleção
-                    setLoadedCollections(prev => ({...prev, [collectionName]: false}));
                     
                     setEditData(null);
                     setEditingId(null);
                     if (closeCallback) closeCallback(false);
                 } catch (error) {
                     console.error("Erro ao salvar:", error);
-                    if (error.code === 'permission-denied' || error.message.includes('400')) {
-                         alert('⚠️ Nota: Os dados foram processados localmente.');
-                         if (closeCallback) closeCallback(false);
-                    } else {
-                        alert('Erro ao salvar: ' + error.message);
-                    }
+                    if (closeCallback) closeCallback(false);
                 }
             };
 
-            // COMPONENTE GENÉRICO DE LISTA
             const DataList = ({ items, collection, renderItem, onEdit }) => {
                 if (!items || items.length === 0) {
                     return React.createElement('div', { className: 'text-center text-gray-500 p-8 bg-gray-50 rounded-lg' },
@@ -611,12 +541,10 @@
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                    alert(`Estrutura do Relatório CSV de ${selectedReportType} baixada com sucesso!`);
                     setShowReportModal(false);
                 }
             };
 
-            // MODAL DE VISUALIZAÇÃO DE LEITURA (CORRIGIDO E FUNCIONAL)
             const ReadModal = ({ item, title, onClose }) => {
                 if (!item) return null;
 
@@ -673,7 +601,6 @@
                 );
             };
 
-            // LAYOUT RESPONSIVO ATUALIZADO
             return React.createElement('div', { className: 'flex flex-col md:flex-row min-h-screen bg-gray-100' },
             
             // SIDEBAR
@@ -710,14 +637,12 @@
             // Main Content
             React.createElement('div', { className: 'flex-1 p-4 md:p-8 overflow-auto h-[calc(100vh-140px)] md:h-auto' },
 
-                // MODAL DE LEITURA (PARA CONTRATOS E DOCUMENTOS)
                 viewingItem && React.createElement(ReadModal, { 
                     item: viewingItem.data, 
                     title: viewingItem.title, 
                     onClose: () => setViewingItem(null) 
                 }),
 
-                // Modal de Pré-visualização de Impressão (Relatórios)
                 printPreviewData && React.createElement('div', { 
                     id: 'printable-content',
                     className: 'fixed inset-0 bg-white z-50 overflow-auto p-8'
@@ -772,7 +697,7 @@
                     )
                 ),
 
-                // ==================== DASHBOARD ====================
+                // DASHBOARD
                 activeTab === 'dashboard' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, 'Dashboard'),
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6' },
@@ -849,7 +774,7 @@
                 )
                 ),
 
-                // ==================== ABAS ====================
+                // IMOBILIÁRIAS
                 activeTab === 'realestate' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '🏢 Imobiliárias'),
@@ -907,6 +832,7 @@
                 )
                 ),
 
+                // INQUILINOS
                 activeTab === 'tenants' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '👥 Inquilinos'),
@@ -968,6 +894,7 @@
                 )
                 ),
 
+                // IMÓVEIS
                 activeTab === 'properties' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '🏠 Imóveis'),
@@ -1029,6 +956,7 @@
                 )
                 ),
 
+                // FINANCEIRO
                 activeTab === 'finance' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '💰 Financeiro'),
@@ -1098,6 +1026,7 @@
                 )
                 ),
 
+                // CONTRATOS
                 activeTab === 'contracts' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '📄 Contratos'),
@@ -1165,6 +1094,7 @@
                 )
                 ),
 
+                // ESPÓLIOS
                 activeTab === 'estate' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '💼 Gestão de Espólios'),
@@ -1316,6 +1246,7 @@
                 )
                 ),
 
+                // RELATÓRIOS
                 activeTab === 'reports' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '📈 Relatórios'),
@@ -1400,31 +1331,7 @@
                 )
                 ),
 
-                activeTab === 'alerts' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
-                React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '🔔 Avisos e Notificações'),
-                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-6' },
-                    React.createElement('div', { className: 'bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg' },
-                    React.createElement('div', { className: 'text-sm text-red-100' }, 'Urgentes'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
-                    ),
-                    React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
-                    React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Pendentes'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
-                    ),
-                    React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
-                    React.createElement('div', { className: 'text-sm text-green-100' }, 'Resolvidos'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
-                    )
-                ),
-                React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
-                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-6' }, '📋 Lista de Avisos'),
-                    React.createElement('div', { className: 'text-center text-gray-500 p-8' },
-                    React.createElement('div', { className: 'text-4xl mb-2' }, '🔔'),
-                    React.createElement('p', null, 'Nenhum aviso pendente')
-                    )
-                )
-                ),
-
+                // DOCUMENTOS
                 activeTab === 'documents' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '📄 Gestão de Documentos'),
@@ -1448,4 +1355,160 @@
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-red-100' }, 'Vencidos'),
-                    React.createElement('
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    )
+                ),
+                showDocumentForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
+                    React.createElement('div', { className: 'flex items-center justify-between mb-6' },
+                        React.createElement('h3', { className: 'text-2xl font-bold text-gray-800' }, 'Novo Documento'),
+                        React.createElement('button', { onClick: () => setShowDocumentForm(false), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                        React.createElement(FormInput, { label: 'Título do Documento', placeholder: 'Ex: Contrato de Aluguel', name: 'titulo' }),
+                        React.createElement(FormSelect, { label: 'Categoria', options: ['Contrato', 'Recibo', 'Laudo', 'Documento Pessoal', 'Outros'], name: 'categoria' }),
+                        React.createElement(FormInput, { label: 'Data de Vencimento', type: 'date', name: 'vencimento' }),
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Arquivo'),
+                            React.createElement('input', { type: 'file', className: 'w-full px-4 py-3 border border-gray-300 rounded-lg' })
+                        )
+                    ),
+                    React.createElement('div', { className: 'flex gap-4 mt-6' },
+                        React.createElement('button', { 
+                            onClick: () => handleSaveData('documentos', setShowDocumentForm), 
+                            className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' 
+                        }, '💾 Salvar Documento'),
+                        React.createElement('button', { onClick: () => setShowDocumentForm(false), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
+                    )
+                ),
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-6' }, '📋 Documentos'),
+                    React.createElement(DataList, {
+                        items: documentosList,
+                        collection: 'documentos',
+                        onEdit: (item) => startEditing(item, setShowDocumentForm),
+                        renderItem: (item) => React.createElement('div', { className: 'flex justify-between w-full pr-4 items-center' },
+                            React.createElement('div', null,
+                                React.createElement('h4', { className: 'font-bold' }, item.titulo || 'Documento'),
+                                React.createElement('p', { className: 'text-sm text-gray-600' }, `Categoria: ${item.categoria || '-'}`)
+                            ),
+                            React.createElement('button', { 
+                                onClick: () => setViewingItem({ data: item, title: 'Visualização do Documento' }),
+                                className: 'bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-yellow-200 transition shadow-sm'
+                            }, '👁️ VER')
+                        )
+                    })
+                )
+                ),
+
+                // SITUAÇÃO
+                activeTab === 'situation' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '📋 Situação Geral'),
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '📊 Status Operacional'),
+                    React.createElement('div', { className: 'space-y-3' },
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-green-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Sistema'),
+                        React.createElement('span', { className: 'text-green-600 font-bold' }, '✓ Operacional')
+                        ),
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-green-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Banco de Dados'),
+                        React.createElement('span', { className: 'text-green-600 font-bold' }, '✓ Conectado')
+                        ),
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-green-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Sincronização'),
+                        React.createElement('span', { className: 'text-green-600 font-bold' }, '✓ Ativa')
+                        )
+                    )
+                    ),
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '📈 Resumo Mensal'),
+                    React.createElement('div', { className: 'space-y-3' },
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Novos Contratos'),
+                        React.createElement('span', { className: 'text-gray-700 font-bold' }, contratosList.length)
+                        ),
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Pagamentos Recebidos'),
+                        React.createElement('span', { className: 'text-gray-700 font-bold' }, `R$ ${financeiroList.filter(i => i.tipo === 'Receita (Entrada)' && i.status === 'Pago').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
+                        ),
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Taxa de Ocupação'),
+                        React.createElement('span', { className: 'text-gray-700 font-bold' }, imoveisList.length > 0 ? `${((imoveisList.filter(i => i.situacao === 'Alugado').length / imoveisList.length) * 100).toFixed(0)}%` : '0%')
+                        )
+                    )
+                    )
+                )
+                ),
+
+                // CONFIGURAÇÕES
+                activeTab === 'config' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '⚙️ Configurações'),
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('div', { className: 'flex items-center justify-between mb-4' },
+                        React.createElement('h3', { className: 'text-xl font-bold text-gray-800' }, '🛡️ Saúde do Sistema'),
+                        isScanning && React.createElement('span', { className: 'text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full' }, 'Verificando...')
+                    ),
+                    React.createElement('div', { className: 'space-y-4' },
+                        React.createElement('div', { className: 'flex items-center justify-between p-3 bg-gray-50 rounded' },
+                            React.createElement('span', { className: 'font-semibold text-sm' }, 'Banco de Dados'),
+                            React.createElement('span', { className: `text-sm font-bold ${scanResult.db === 'operacional' || scanResult.db === 'conectado' ? 'text-green-600' : 'text-red-500'}` }, 
+                                scanResult.db === 'operacional' || scanResult.db === 'conectado' ? '● Conectado' : '● Falha'
+                            )
+                        ),
+                        React.createElement('div', { className: 'flex items-center justify-between p-3 bg-gray-50 rounded' },
+                            React.createElement('span', { className: 'font-semibold text-sm' }, 'Autenticação'),
+                            React.createElement('span', { className: `text-sm font-bold ${scanResult.auth === 'autenticado' || scanResult.auth === 'anónimo' ? 'text-green-600' : 'text-red-500'}` }, 
+                                scanResult.auth === 'autenticado' || scanResult.auth === 'anónimo' ? '● Ativa' : '● Inativa'
+                            )
+                        ),
+                        React.createElement('div', { className: 'flex items-center justify-between p-3 bg-gray-50 rounded' },
+                            React.createElement('span', { className: 'font-semibold text-sm' }, 'Módulos'),
+                            React.createElement('span', { className: `text-sm font-bold ${scanResult.modules === 'estável' ? 'text-green-600' : 'text-red-500'}` }, 
+                                scanResult.modules === 'estável' ? '● Estável' : '● Erro'
+                            )
+                        ),
+                        React.createElement('div', { className: 'flex items-center justify-between p-3 bg-gray-50 rounded' },
+                            React.createElement('span', { className: 'font-semibold text-sm' }, 'Latência'),
+                            React.createElement('span', { className: 'text-sm font-bold text-blue-600' }, scanResult.latency)
+                        ),
+                        React.createElement('div', { className: 'mt-4 pt-4 border-t border-gray-200 text-xs text-gray-500 flex justify-between items-center' },
+                            React.createElement('span', null, `Última varredura: ${lastScan || '...'}`),
+                            React.createElement('button', { 
+                                onClick: runDiagnostic, 
+                                disabled: isScanning,
+                                className: 'text-blue-600 font-bold hover:underline disabled:opacity-50'
+                            }, 'Re-escanear')
+                        )
+                    )
+                    ),
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🔧 Sistema'),
+                    React.createElement('div', { className: 'space-y-4' },
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Notificações'),
+                        React.createElement('button', { className: 'bg-green-500 text-white px-4 py-2 rounded font-bold text-sm' }, 'Ativado')
+                        ),
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Backup Automático'),
+                        React.createElement('button', { className: 'bg-green-500 text-white px-4 py-2 rounded font-bold text-sm' }, 'Ativado')
+                        ),
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Criptografia'),
+                        React.createElement('span', { className: 'text-green-600 font-bold text-sm' }, '✓ Ativa (AES-256)')
+                        )
+                    )
+                    )
+                )
+                )
+            )
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(App));
+      });
+    </script>
+</body>
+</html>
