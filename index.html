@@ -500,10 +500,10 @@
 
             const getReportStructure = (type) => {
                 switch(type) {
-                    case 'Financeiro': return { headers: ['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor', 'Status'], rows: [] };
-                    case 'Imóveis': return { headers: ['Imóvel', 'Endereço', 'Proprietário', 'Valor Aluguel', 'Status'], rows: [] };
-                    case 'Inquilinos': return { headers: ['Nome', 'CPF', 'Imóvel', 'Telefone', 'Status'], rows: [] };
-                    case 'Espólios': return { headers: ['Nome do Espólio', 'Imóvel', 'Data Abertura', 'Valor Mensal', 'Herdeiros'], rows: [] };
+                    case 'Financeiro': return { headers: ['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor', 'Status'], rows: financeiroList.map(i => [i.data || '-', i.descricao || '-', i.categoria || '-', i.tipo || '-', `R$ ${i.valor || '0,00'}`, i.status || '-']) };
+                    case 'Imóveis': return { headers: ['Imóvel', 'Endereço', 'Proprietário', 'Valor Aluguel', 'Status'], rows: imoveisList.map(i => [i.titulo || '-', i.endereco || '-', i.proprietario || '-', `R$ ${i.valor || '0,00'}`, i.situacao || '-']) };
+                    case 'Inquilinos': return { headers: ['Nome', 'CPF', 'Imóvel', 'Telefone', 'Status'], rows: inquilinosList.map(i => [i.nome || '-', i.cpf || '-', '-', i.telefone || '-', 'Ativo']) };
+                    case 'Espólios': return { headers: ['Nome do Espólio', 'Imóvel', 'Data Abertura', 'Valor Mensal', 'Herdeiros'], rows: espoliosList.map(i => [i.nome_espolio || '-', i.imovel_relacionado || '-', i.data_abertura || '-', `R$ ${i.valor_mensal || '0,00'}`, i.herdeiro_nome || '-']) };
                     default: return { headers: ['Data', 'Descrição', 'Status'], rows: [] };
                 }
             };
@@ -673,7 +673,7 @@
                     React.createElement('div', { className: 'h-64 flex items-end justify-around gap-2' },
                         ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'].map((month) =>
                         React.createElement('div', { key: month, className: 'flex-1 flex flex-col items-center' },
-                            React.createElement('div', { className: 'text-xs font-semibold text-gray-600 mb-1' }, 'R$ 0'),
+                            React.createElement('div', { className: 'text-xs font-semibold text-gray-600 mb-1' }, `R$ ${financeiroList.filter(i => i.tipo === 'Receita (Entrada)' && i.data && i.data.includes('-0' + (['Jan','Fev','Mar','Abr','Mai','Jun'].indexOf(month)+1))).reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(0)}`),
                             React.createElement('div', { 
                             className: 'w-full bg-gradient-to-t from-yellow-600 to-yellow-400 rounded-t-lg hover:from-yellow-700 hover:to-yellow-500 transition-all cursor-pointer',
                             style: { height: '20%' }
@@ -722,7 +722,7 @@
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-gray-300' }, 'Total Imóveis'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, imoveisList.length)
                     )
                 ),
                 showRealEstateForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
@@ -776,7 +776,7 @@
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-green-100' }, 'Ativos'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, inquilinosList.length)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-red-100' }, 'Inadimplentes'),
@@ -837,15 +837,15 @@
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-green-100' }, 'Ocupados'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, imoveisList.filter(i => i.situacao === 'Alugado').length)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-blue-100' }, 'Disponíveis'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, imoveisList.filter(i => i.situacao === 'Disponível').length)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-gray-300' }, 'Manutenção'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, imoveisList.filter(i => i.situacao === 'Reforma').length)
                     )
                 ),
                 showPropertyForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
@@ -894,19 +894,19 @@
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
                     React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-green-100' }, 'Receitas'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, 'R$ 0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, `R$ ${financeiroList.filter(i => i.tipo === 'Receita (Entrada)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-red-100' }, 'Despesas'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, 'R$ 0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, `R$ ${financeiroList.filter(i => i.tipo === 'Despesa (Saída)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Saldo'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, 'R$ 0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, `R$ ${(financeiroList.filter(i => i.tipo === 'Receita (Entrada)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0) - financeiroList.filter(i => i.tipo === 'Despesa (Saída)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0)).toFixed(2)}`)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-orange-100' }, 'A Receber'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, 'R$ 0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, `R$ ${financeiroList.filter(i => i.status === 'Pendente' && i.tipo === 'Receita (Entrada)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
                     )
                 ),
                 showFinanceForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
@@ -963,11 +963,11 @@
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
                     React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Total'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, contratosList.length)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-green-100' }, 'Ativos'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, contratosList.length)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-orange-100' }, 'A Vencer'),
@@ -1026,11 +1026,11 @@
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
                     React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Espólios Ativos'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, espoliosList.length)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-orange-100' }, 'Valor Pendente'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, 'R$ 0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, `R$ ${espoliosList.reduce((acc, curr) => acc + (parseFloat(curr.valor_mensal) || 0), 0).toFixed(2)}`)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-green-100' }, 'Já Repassado'),
@@ -1038,7 +1038,7 @@
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-gray-300' }, 'Total Herdeiros'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, espoliosList.length > 0 ? espoliosList.length : '0')
                     )
                 ),
                 showEstateForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
@@ -1291,7 +1291,7 @@
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-green-100' }, 'Em Dia'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, documentosList.length)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-orange-100' }, 'A Vencer'),
@@ -1330,9 +1330,15 @@
                         items: documentosList,
                         collection: 'documentos',
                         onEdit: (item) => startEditing(item, setShowDocumentForm),
-                        renderItem: (item) => React.createElement('div', null,
-                            React.createElement('h4', { className: 'font-bold' }, item.titulo || 'Documento'),
-                            React.createElement('p', { className: 'text-sm text-gray-600' }, `Categoria: ${item.categoria || '-'}`)
+                        renderItem: (item) => React.createElement('div', { className: 'flex justify-between w-full pr-4 items-center' },
+                            React.createElement('div', null,
+                                React.createElement('h4', { className: 'font-bold' }, item.titulo || 'Documento'),
+                                React.createElement('p', { className: 'text-sm text-gray-600' }, `Categoria: ${item.categoria || '-'}`)
+                            ),
+                            React.createElement('button', { 
+                                onClick: () => alert('👁️ Abrindo visualização do documento: ' + (item.titulo || 'Sem título')),
+                                className: 'bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg text-sm font-bold hover:bg-yellow-200'
+                            }, '👁️ Ver')
                         )
                     })
                 )
@@ -1363,15 +1369,15 @@
                     React.createElement('div', { className: 'space-y-3' },
                         React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
                         React.createElement('span', { className: 'font-semibold' }, 'Novos Contratos'),
-                        React.createElement('span', { className: 'text-gray-700 font-bold' }, '0')
+                        React.createElement('span', { className: 'text-gray-700 font-bold' }, contratosList.length)
                         ),
                         React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
                         React.createElement('span', { className: 'font-semibold' }, 'Pagamentos Recebidos'),
-                        React.createElement('span', { className: 'text-gray-700 font-bold' }, 'R$ 0')
+                        React.createElement('span', { className: 'text-gray-700 font-bold' }, `R$ ${financeiroList.filter(i => i.tipo === 'Receita (Entrada)' && i.status === 'Pago').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
                         ),
                         React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
                         React.createElement('span', { className: 'font-semibold' }, 'Taxa de Ocupação'),
-                        React.createElement('span', { className: 'text-gray-700 font-bold' }, '0%')
+                        React.createElement('span', { className: 'text-gray-700 font-bold' }, imoveisList.length > 0 ? `${((imoveisList.filter(i => i.situacao === 'Alugado').length / imoveisList.length) * 100).toFixed(0)}%` : '0%')
                         )
                     )
                     )
