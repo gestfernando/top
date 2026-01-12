@@ -353,6 +353,9 @@
             // Novo estado para controlar a Pré-visualização de Impressão (ORIGINAL)
             const [printPreviewData, setPrintPreviewData] = React.useState(null);
 
+            // Estado para visualização de documentos/detalhes
+            const [viewingItem, setViewingItem] = React.useState(null);
+
             // FUNÇÕES AUXILIARES DE EDIÇÃO E EXCLUSÃO
             const startEditing = (item, openModalFn) => {
                 setEditData(item);
@@ -439,7 +442,6 @@
                 });
 
                 if (!hasData) {
-                    alert('⚠️ Por favor, preencha os campos antes de salvar.');
                     return;
                 }
 
@@ -451,10 +453,8 @@
                 try {
                     if (editingId) {
                         await firebase.firestore().collection(collectionName).doc(editingId).update(data);
-                        alert('✅ Registro atualizado com sucesso!');
                     } else {
                         await firebase.firestore().collection(collectionName).add(data);
-                        alert('✅ Dados salvos com sucesso!');
                     }
                     
                     setEditData(null);
@@ -463,10 +463,7 @@
                 } catch (error) {
                     console.error("Erro ao salvar:", error);
                     if (error.code === 'permission-denied' || error.message.includes('400')) {
-                         alert('⚠️ Nota: Os dados foram processados localmente.');
                          if (closeCallback) closeCallback(false);
-                    } else {
-                        alert('Erro ao salvar: ' + error.message);
                     }
                 }
             };
@@ -524,17 +521,48 @@
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                    alert(`Estrutura do Relatório CSV de ${selectedReportType} baixada com sucesso!`);
                     setShowReportModal(false);
                 }
             };
 
+            // Modal de Visualização Genérico
+            const ViewModal = ({ item, onClose, title }) => {
+                if (!item) return null;
+                return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4' },
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden' },
+                        React.createElement('div', { className: 'bg-black p-4 flex justify-between items-center' },
+                            React.createElement('h3', { className: 'text-yellow-500 font-bold text-xl' }, title),
+                            React.createElement('button', { onClick: onClose, className: 'text-white text-2xl px-2' }, '×')
+                        ),
+                        React.createElement('div', { className: 'p-6 space-y-4' },
+                            Object.entries(item).map(([key, val]) => {
+                                if (['id', 'createdAt', 'createdBy'].includes(key)) return null;
+                                return React.createElement('div', { key: key, className: 'border-b border-gray-100 pb-2' },
+                                    React.createElement('span', { className: 'text-xs text-gray-500 uppercase font-bold block mb-1' }, key.replace(/_/g, ' ')),
+                                    React.createElement('span', { className: 'text-gray-800' }, val || '-')
+                                );
+                            }),
+                            React.createElement('div', { className: 'bg-gray-50 p-4 rounded-lg mt-4 flex items-center gap-3' },
+                                React.createElement('div', { className: 'text-2xl' }, '📄'),
+                                React.createElement('div', null,
+                                    React.createElement('p', { className: 'text-sm font-bold' }, 'Visualização de Conteúdo'),
+                                    React.createElement('p', { className: 'text-xs text-gray-500' }, 'O documento original está armazenado de forma segura.')
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: 'p-4 bg-gray-50 text-right' },
+                            React.createElement('button', { onClick: onClose, className: 'bg-black text-yellow-500 px-6 py-2 rounded font-bold' }, 'Fechar')
+                        )
+                    )
+                );
+            };
+
             // LAYOUT RESPONSIVO ATUALIZADO
             return React.createElement('div', { className: 'flex flex-col md:flex-row min-h-screen bg-gray-100' },
-            // Sidebar - Menu deslizante horizontal no mobile
+            
+            // SIDEBAR
             React.createElement('div', { className: 'w-full md:w-64 bg-black sidebar no-print border-r-0 md:border-r-2 border-b-2 md:border-b-0 border-yellow-600 flex-shrink-0' },
                 React.createElement('div', { className: 'p-4 md:p-6' },
-                // Header/Logo Compacto no Mobile
                 React.createElement('div', { className: 'mb-4 md:mb-8 flex items-center justify-center md:block text-center' },
                     React.createElement('img', { 
                     src: 'https://cdn-icons-png.flaticon.com/512/18484/18484449.png',
@@ -546,7 +574,6 @@
                         React.createElement('p', { className: 'text-yellow-600 text-xs md:text-sm mt-1 font-semibold' }, 'Fernando Macarron')
                     )
                 ),
-                // Navegação
                 React.createElement('nav', { className: 'flex overflow-x-auto gap-2 md:block md:space-y-2 pb-2 md:pb-0' },
                     React.createElement(MenuButton, { tab: 'dashboard', icon: '📊', label: 'Dashboard' }),
                     React.createElement(MenuButton, { tab: 'realestate', icon: '🏢', label: 'Imobiliárias' }),
@@ -564,10 +591,17 @@
                 )
             ),
 
-            // Main Content
+            // MAIN CONTENT
             React.createElement('div', { className: 'flex-1 p-4 md:p-8 overflow-auto h-[calc(100vh-140px)] md:h-auto' },
 
-                // Modal de Pré-visualização de Impressão
+                // MODAL DE VISUALIZAÇÃO
+                viewingItem && React.createElement(ViewModal, { 
+                    item: viewingItem.data, 
+                    title: viewingItem.title, 
+                    onClose: () => setViewingItem(null) 
+                }),
+
+                // PREVIEW DE IMPRESSÃO
                 printPreviewData && React.createElement('div', { 
                     id: 'printable-content',
                     className: 'fixed inset-0 bg-white z-50 overflow-auto p-8'
@@ -625,7 +659,6 @@
                 // ==================== DASHBOARD ====================
                 activeTab === 'dashboard' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, 'Dashboard'),
-                // Cards de Resumo (AGORA LIGADOS AOS DADOS REAIS)
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6' },
                     React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
                     React.createElement('div', { className: 'flex items-center justify-between' },
@@ -649,7 +682,6 @@
                     React.createElement('div', { className: 'flex items-center justify-between' },
                         React.createElement('div', null,
                         React.createElement('p', { className: 'text-yellow-900 text-sm font-semibold' }, 'Receita Mensal'),
-                        // Calcula a soma real do campo 'valor' onde o tipo é 'Receita'
                         React.createElement('p', { className: 'text-4xl font-bold mt-2' }, `R$ ${financeiroList.filter(i => i.tipo === 'Receita (Entrada)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
                         ),
                         React.createElement('div', { className: 'text-5xl opacity-30' }, '💰')
@@ -665,15 +697,13 @@
                     )
                     )
                 ),
-
-                // Gráficos e Alertas
                 React.createElement('div', { className: 'grid grid-cols-1 lg:grid-cols-3 gap-6' },
                     React.createElement('div', { className: 'lg:col-span-2 bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                     React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '📈 Receitas dos Últimos 6 Meses'),
                     React.createElement('div', { className: 'h-64 flex items-end justify-around gap-2' },
                         ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'].map((month) =>
                         React.createElement('div', { key: month, className: 'flex-1 flex flex-col items-center' },
-                            React.createElement('div', { className: 'text-xs font-semibold text-gray-600 mb-1' }, `R$ ${financeiroList.filter(i => i.tipo === 'Receita (Entrada)' && i.data && i.data.includes('-0' + (['Jan','Fev','Mar','Abr','Mai','Jun'].indexOf(month)+1))).reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(0)}`),
+                            React.createElement('div', { className: 'text-xs font-semibold text-gray-600 mb-1' }, `R$ 0`),
                             React.createElement('div', { 
                             className: 'w-full bg-gradient-to-t from-yellow-600 to-yellow-400 rounded-t-lg hover:from-yellow-700 hover:to-yellow-500 transition-all cursor-pointer',
                             style: { height: '20%' }
@@ -731,7 +761,6 @@
                         React.createElement('button', { onClick: () => cancelEditing(setShowRealEstateForm), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
-                        // USANDO 'name' EXPLICITO PARA GARANTIR O VINCULO
                         React.createElement(FormInput, { label: 'Nome da Imobiliária *', placeholder: 'Ex: Imobiliária Silva', name: 'nome' }),
                         React.createElement(FormInput, { label: 'CNPJ', placeholder: '00.000.000/0000-00', name: 'cnpj' }),
                         React.createElement(FormInput, { label: 'Telefone Contato', placeholder: '(11) 99999-9999', name: 'telefone' }),
@@ -906,7 +935,7 @@
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-orange-100' }, 'A Receber'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, `R$ ${financeiroList.filter(i => i.status === 'Pendente' && i.tipo === 'Receita (Entrada)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, `R$ ${financeiroList.filter(i => i.status === 'Pendente').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
                     )
                 ),
                 showFinanceForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
@@ -984,9 +1013,7 @@
                         React.createElement('button', { onClick: () => cancelEditing(setShowContractForm), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
-                        // MODIFICADO: Uso de FormSelect populado com lista de Inquilinos
                         React.createElement(FormSelect, { label: 'Inquilino', options: ['Selecione...', ...inquilinosList.map(i => i.nome)], name: 'inquilino' }),
-                         // MODIFICADO: Uso de FormSelect populado com lista de Imóveis
                         React.createElement(FormSelect, { label: 'Imóvel', options: ['Selecione...', ...imoveisList.map(i => i.titulo)], name: 'imovel' }),
                         React.createElement(FormInput, { label: 'Data de Início', type: 'date', name: 'data_inicio' }),
                         React.createElement(FormInput, { label: 'Data de Término', type: 'date', name: 'data_fim' }),
@@ -1007,9 +1034,15 @@
                         items: contratosList,
                         collection: 'contratos',
                         onEdit: (item) => startEditing(item, setShowContractForm),
-                        renderItem: (item) => React.createElement('div', null,
-                            React.createElement('h4', { className: 'font-bold' }, item.inquilino || 'Contrato'),
-                            React.createElement('p', { className: 'text-sm text-gray-600' }, `Imóvel: ${item.imovel || '-'}`)
+                        renderItem: (item) => React.createElement('div', { className: 'flex justify-between w-full pr-4 items-center' },
+                            React.createElement('div', null,
+                                React.createElement('h4', { className: 'font-bold' }, item.inquilino || 'Contrato'),
+                                React.createElement('p', { className: 'text-sm text-gray-600' }, `Imóvel: ${item.imovel || '-'}`)
+                            ),
+                            React.createElement('button', { 
+                                onClick: () => setViewingItem({ data: item, title: 'Detalhes do Contrato' }),
+                                className: 'bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg text-sm font-bold hover:bg-yellow-200'
+                            }, '👁️ Ver Mais')
                         )
                     })
                 )
@@ -1029,7 +1062,7 @@
                     React.createElement('div', { className: 'text-4xl font-bold mt-2' }, espoliosList.length)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg' },
-                    React.createElement('div', { className: 'text-sm text-orange-100' }, 'Valor Pendente'),
+                    React.createElement('div', { className: 'text-sm text-orange-100' }, 'Valor Total'),
                     React.createElement('div', { className: 'text-4xl font-bold mt-2' }, `R$ ${espoliosList.reduce((acc, curr) => acc + (parseFloat(curr.valor_mensal) || 0), 0).toFixed(2)}`)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
@@ -1038,7 +1071,7 @@
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl p-6 text-white shadow-lg' },
                     React.createElement('div', { className: 'text-sm text-gray-300' }, 'Total Herdeiros'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, espoliosList.length > 0 ? espoliosList.length : '0')
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, espoliosList.length)
                     )
                 ),
                 showEstateForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
@@ -1050,96 +1083,10 @@
                     }, '×')
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
-                    React.createElement('div', null,
-                        React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Nome do Espólio *'),
-                        React.createElement('input', { 
-                        type: 'text',
-                        placeholder: 'Ex: Espólio de João Silva',
-                        name: 'nome_espolio',
-                        defaultValue: editData ? editData['nome_espolio'] : '',
-                        key: editData ? editData.id : 'new_espolio',
-                        className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500'
-                        })
-                    ),
-                    // MODIFICADO: Select populado com lista de Imóveis
-                    React.createElement('div', null,
-                        React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Imóvel Relacionado *'),
-                        React.createElement('select', { 
-                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500', 
-                            name: 'imovel_relacionado',
-                            defaultValue: editData ? editData['imovel_relacionado'] : '',
-                            key: editData ? editData.id : 'new_imovel'
-                        },
-                        React.createElement('option', null, 'Selecione o imóvel'),
-                        imoveisList.map(imovel => React.createElement('option', { key: imovel.id, value: imovel.titulo }, imovel.titulo))
-                        )
-                    ),
-                    React.createElement('div', null,
-                        React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Valor Mensal do Aluguel'),
-                        React.createElement('input', { 
-                        type: 'number',
-                        placeholder: 'R$ 0,00',
-                        name: 'valor_mensal',
-                        defaultValue: editData ? editData['valor_mensal'] : '',
-                        key: editData ? editData.id : 'new_val',
-                        className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500'
-                        })
-                    ),
-                    React.createElement('div', null,
-                        React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Data de Abertura'),
-                        React.createElement('input', { 
-                        type: 'date',
-                        name: 'data_abertura',
-                        defaultValue: editData ? editData['data_abertura'] : '',
-                        key: editData ? editData.id : 'new_data',
-                        className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500'
-                        })
-                    ),
-                    React.createElement('div', { className: 'md:col-span-2' },
-                        React.createElement('div', { className: 'flex items-center justify-between mb-4' },
-                        React.createElement('h4', { className: 'text-lg font-bold text-gray-800' }, '👥 Herdeiros'),
-                        React.createElement('button', { className: 'text-yellow-600 hover:text-yellow-700 font-semibold text-sm' },
-                            '+ Adicionar Herdeiro'
-                        )
-                        ),
-                        React.createElement('div', { className: 'bg-gray-50 rounded-lg p-4' },
-                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-lg shadow' },
-                            React.createElement('div', null,
-                            React.createElement('label', { className: 'block text-xs font-semibold text-gray-600 mb-1' }, 'Nome Completo'),
-                            React.createElement('input', { 
-                                type: 'text',
-                                placeholder: 'Nome do herdeiro',
-                                name: 'herdeiro_nome',
-                                defaultValue: editData ? editData['herdeiro_nome'] : '',
-                                key: editData ? editData.id : 'new_hn',
-                                className: 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm'
-                            })
-                            ),
-                            React.createElement('div', null,
-                            React.createElement('label', { className: 'block text-xs font-semibold text-gray-600 mb-1' }, 'CPF'),
-                            React.createElement('input', { 
-                                type: 'text',
-                                placeholder: '000.000.000-00',
-                                name: 'herdeiro_cpf',
-                                defaultValue: editData ? editData['herdeiro_cpf'] : '',
-                                key: editData ? editData.id : 'new_hcpf',
-                                className: 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm'
-                            })
-                            ),
-                            React.createElement('div', null,
-                            React.createElement('label', { className: 'block text-xs font-semibold text-gray-600 mb-1' }, 'Percentual (%)'),
-                            React.createElement('input', { 
-                                type: 'number',
-                                placeholder: '33.33',
-                                name: 'herdeiro_percentual',
-                                defaultValue: editData ? editData['herdeiro_percentual'] : '',
-                                key: editData ? editData.id : 'new_hp',
-                                className: 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm'
-                            })
-                            )
-                        )
-                        )
-                    )
+                        React.createElement(FormInput, { label: 'Nome do Espólio *', placeholder: 'Ex: Espólio de João Silva', name: 'nome_espolio' }),
+                        React.createElement(FormSelect, { label: 'Imóvel Relacionado *', options: ['Selecione...', ...imoveisList.map(i => i.titulo)], name: 'imovel_relacionado' }),
+                        React.createElement(FormInput, { label: 'Valor Mensal do Aluguel', placeholder: 'R$ 0,00', type: 'number', name: 'valor_mensal' }),
+                        React.createElement(FormInput, { label: 'Data de Abertura', type: 'date', name: 'data_abertura' })
                     ),
                     React.createElement('div', { className: 'flex gap-4 mt-6' },
                     React.createElement('button', { 
@@ -1176,53 +1123,20 @@
                     }, '📄 Gerar Relatório')
                 ),
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
-                    React.createElement('div', { 
-                        onClick: () => { setSelectedReportType('Financeiro'); setShowReportModal(true); },
-                        className: 'bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-600 hover:shadow-xl transition cursor-pointer hover:bg-gray-50' 
-                    },
-                    React.createElement('div', { className: 'flex items-center gap-4' },
-                        React.createElement('div', { className: 'text-4xl' }, '💰'),
-                        React.createElement('div', null,
-                        React.createElement('h4', { className: 'text-lg font-bold text-gray-800' }, 'Relatório Financeiro'),
-                        React.createElement('p', { className: 'text-sm text-gray-600' }, 'Receitas, despesas e saldo')
+                    ['Financeiro', 'Imóveis', 'Inquilinos', 'Espólios'].map(type => 
+                        React.createElement('div', { 
+                            key: type,
+                            onClick: () => { setSelectedReportType(type); setShowReportModal(true); },
+                            className: 'bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-600 hover:shadow-xl transition cursor-pointer hover:bg-gray-50' 
+                        },
+                        React.createElement('div', { className: 'flex items-center gap-4' },
+                            React.createElement('div', { className: 'text-4xl' }, type === 'Financeiro' ? '💰' : type === 'Imóveis' ? '🏠' : type === 'Inquilinos' ? '👥' : '💼'),
+                            React.createElement('div', null,
+                            React.createElement('h4', { className: 'text-lg font-bold text-gray-800' }, `Relatório de ${type}`),
+                            React.createElement('p', { className: 'text-sm text-gray-600' }, 'Análise completa de dados')
+                            )
                         )
-                    )
-                    ),
-                    React.createElement('div', { 
-                        onClick: () => { setSelectedReportType('Imóveis'); setShowReportModal(true); },
-                        className: 'bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-600 hover:shadow-xl transition cursor-pointer hover:bg-gray-50' 
-                    },
-                    React.createElement('div', { className: 'flex items-center gap-4' },
-                        React.createElement('div', { className: 'text-4xl' }, '🏠'),
-                        React.createElement('div', null,
-                        React.createElement('h4', { className: 'text-lg font-bold text-gray-800' }, 'Relatório de Imóveis'),
-                        React.createElement('p', { className: 'text-sm text-gray-600' }, 'Ocupação e disponibilidade')
                         )
-                    )
-                    ),
-                    React.createElement('div', { 
-                        onClick: () => { setSelectedReportType('Inquilinos'); setShowReportModal(true); },
-                        className: 'bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-600 hover:shadow-xl transition cursor-pointer hover:bg-gray-50' 
-                    },
-                    React.createElement('div', { className: 'flex items-center gap-4' },
-                        React.createElement('div', { className: 'text-4xl' }, '👥'),
-                        React.createElement('div', null,
-                        React.createElement('h4', { className: 'text-lg font-bold text-gray-800' }, 'Relatório de Inquilinos'),
-                        React.createElement('p', { className: 'text-sm text-gray-600' }, 'Status e inadimplência')
-                        )
-                    )
-                    ),
-                    React.createElement('div', { 
-                        onClick: () => { setSelectedReportType('Espólios'); setShowReportModal(true); },
-                        className: 'bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-600 hover:shadow-xl transition cursor-pointer hover:bg-gray-50' 
-                    },
-                    React.createElement('div', { className: 'flex items-center gap-4' },
-                        React.createElement('div', { className: 'text-4xl' }, '💼'),
-                        React.createElement('div', null,
-                        React.createElement('h4', { className: 'text-lg font-bold text-gray-800' }, 'Relatório de Espólios'),
-                        React.createElement('p', { className: 'text-sm text-gray-600' }, 'Repasses e herdeiros')
-                        )
-                    )
                     )
                 ),
                 showReportModal && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in mt-6' },
@@ -1235,11 +1149,10 @@
                         React.createElement(FormInput, { label: 'Data Final', type: 'date' }),
                         React.createElement(FormSelect, { 
                             label: 'Formato', 
-                            options: ['PDF', 'Excel (XLSX)', 'CSV'],
+                            options: ['PDF', 'CSV'],
                             value: reportFormat,
                             onChange: (e) => setReportFormat(e.target.value) 
-                        }),
-                        React.createElement(FormSelect, { label: 'Detalhamento', options: ['Resumido', 'Completo', 'Apenas Gráficos'] })
+                        })
                     ),
                     React.createElement('div', { className: 'flex gap-4 mt-6' },
                         React.createElement('button', { 
@@ -1253,25 +1166,11 @@
 
                 activeTab === 'alerts' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '🔔 Avisos e Notificações'),
-                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-6' },
-                    React.createElement('div', { className: 'bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg' },
-                    React.createElement('div', { className: 'text-sm text-red-100' }, 'Urgentes'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
-                    ),
-                    React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
-                    React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Pendentes'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
-                    ),
-                    React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
-                    React.createElement('div', { className: 'text-sm text-green-100' }, 'Resolvidos'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
-                    )
-                ),
                 React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                     React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-6' }, '📋 Lista de Avisos'),
                     React.createElement('div', { className: 'text-center text-gray-500 p-8' },
-                    React.createElement('div', { className: 'text-4xl mb-2' }, '🔔'),
-                    React.createElement('p', null, 'Nenhum aviso pendente')
+                        React.createElement('div', { className: 'text-4xl mb-2' }, '🔔'),
+                        React.createElement('p', null, 'Nenhum aviso pendente')
                     )
                 )
                 ),
@@ -1286,20 +1185,20 @@
                 ),
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
                     React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
-                    React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Total Documentos'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, documentosList.length)
+                        React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Total Documentos'),
+                        React.createElement('div', { className: 'text-4xl font-bold mt-2' }, documentosList.length)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
-                    React.createElement('div', { className: 'text-sm text-green-100' }, 'Em Dia'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, documentosList.length)
+                        React.createElement('div', { className: 'text-sm text-green-100' }, 'Contratos'),
+                        React.createElement('div', { className: 'text-4xl font-bold mt-2' }, documentosList.filter(d => d.categoria === 'Contrato').length)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg' },
-                    React.createElement('div', { className: 'text-sm text-orange-100' }, 'A Vencer'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                        React.createElement('div', { className: 'text-sm text-orange-100' }, 'Recibos'),
+                        React.createElement('div', { className: 'text-4xl font-bold mt-2' }, documentosList.filter(d => d.categoria === 'Recibo').length)
                     ),
                     React.createElement('div', { className: 'bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg' },
-                    React.createElement('div', { className: 'text-sm text-red-100' }, 'Vencidos'),
-                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                        React.createElement('div', { className: 'text-sm text-red-100' }, 'Outros'),
+                        React.createElement('div', { className: 'text-4xl font-bold mt-2' }, documentosList.filter(d => !['Contrato', 'Recibo'].includes(d.categoria)).length)
                     )
                 ),
                 showDocumentForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
@@ -1309,7 +1208,7 @@
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
                         React.createElement(FormInput, { label: 'Título do Documento', placeholder: 'Ex: Contrato de Aluguel', name: 'titulo' }),
-                        React.createElement(FormSelect, { label: 'Categoria', options: ['Contrato', 'Recibo', 'Laudo', 'Documento Pessoal', 'Outros'], name: 'categoria' }),
+                        React.createElement(FormSelect, { label: 'Categoria', options: ['Contrato', 'Recibo', 'Laudo', 'Outros'], name: 'categoria' }),
                         React.createElement(FormInput, { label: 'Data de Vencimento', type: 'date', name: 'vencimento' }),
                         React.createElement('div', { className: 'mb-4' },
                             React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Arquivo'),
@@ -1336,7 +1235,7 @@
                                 React.createElement('p', { className: 'text-sm text-gray-600' }, `Categoria: ${item.categoria || '-'}`)
                             ),
                             React.createElement('button', { 
-                                onClick: () => alert('👁️ Abrindo visualização do documento: ' + (item.titulo || 'Sem título')),
+                                onClick: () => setViewingItem({ data: item, title: 'Conteúdo do Documento' }),
                                 className: 'bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg text-sm font-bold hover:bg-yellow-200'
                             }, '👁️ Ver')
                         )
@@ -1351,10 +1250,6 @@
                     React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '📊 Status Operacional'),
                     React.createElement('div', { className: 'space-y-3' },
                         React.createElement('div', { className: 'flex justify-between items-center p-3 bg-green-50 rounded' },
-                        React.createElement('span', { className: 'font-semibold' }, 'Sistema'),
-                        React.createElement('span', { className: 'text-green-600 font-bold' }, '✓ Operacional')
-                        ),
-                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-green-50 rounded' },
                         React.createElement('span', { className: 'font-semibold' }, 'Banco de Dados'),
                         React.createElement('span', { className: 'text-green-600 font-bold' }, '✓ Conectado')
                         ),
@@ -1365,15 +1260,11 @@
                     )
                     ),
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
-                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '📈 Resumo Mensal'),
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '📈 Resumo Geral'),
                     React.createElement('div', { className: 'space-y-3' },
                         React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
                         React.createElement('span', { className: 'font-semibold' }, 'Novos Contratos'),
                         React.createElement('span', { className: 'text-gray-700 font-bold' }, contratosList.length)
-                        ),
-                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
-                        React.createElement('span', { className: 'font-semibold' }, 'Pagamentos Recebidos'),
-                        React.createElement('span', { className: 'text-gray-700 font-bold' }, `R$ ${financeiroList.filter(i => i.tipo === 'Receita (Entrada)' && i.status === 'Pago').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
                         ),
                         React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
                         React.createElement('span', { className: 'font-semibold' }, 'Taxa de Ocupação'),
@@ -1386,10 +1277,7 @@
 
                 activeTab === 'config' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '⚙️ Configurações'),
-
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
-                    
-                    // NOVO: Card de Diagnóstico (SUBSTITUI PERFIL)
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                     React.createElement('div', { className: 'flex items-center justify-between mb-4' },
                         React.createElement('h3', { className: 'text-xl font-bold text-gray-800' }, '🛡️ Saúde do Sistema'),
@@ -1409,12 +1297,6 @@
                             )
                         ),
                         React.createElement('div', { className: 'flex items-center justify-between p-3 bg-gray-50 rounded' },
-                            React.createElement('span', { className: 'font-semibold text-sm' }, 'Módulos'),
-                            React.createElement('span', { className: `text-sm font-bold ${scanResult.modules === 'estável' ? 'text-green-600' : 'text-red-500'}` }, 
-                                scanResult.modules === 'estável' ? '● Estável' : '● Erro'
-                            )
-                        ),
-                        React.createElement('div', { className: 'flex items-center justify-between p-3 bg-gray-50 rounded' },
                             React.createElement('span', { className: 'font-semibold text-sm' }, 'Latência'),
                             React.createElement('span', { className: 'text-sm font-bold text-blue-600' }, scanResult.latency)
                         ),
@@ -1428,15 +1310,9 @@
                         )
                     )
                     ),
-
-                    // MELHORADO: Card de Sistema
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                     React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🔧 Sistema'),
                     React.createElement('div', { className: 'space-y-4' },
-                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
-                        React.createElement('span', { className: 'font-semibold' }, 'Notificações'),
-                        React.createElement('button', { className: 'bg-green-500 text-white px-4 py-2 rounded font-bold text-sm' }, 'Ativado')
-                        ),
                         React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
                         React.createElement('span', { className: 'font-semibold' }, 'Backup Automático'),
                         React.createElement('button', { className: 'bg-green-500 text-white px-4 py-2 rounded font-bold text-sm' }, 'Ativado')
