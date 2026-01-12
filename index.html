@@ -694,7 +694,7 @@
                     ),
                     React.createElement('div', { className: 'flex gap-4 mt-6' },
                         React.createElement('button', { 
-                            onClick: () => handleSaveData('imobiliarias', setShowRealEstateForm), // CORREÇÃO: Chama handleSaveData
+                            onClick: () => handleSaveData('imobiliarias', setShowRealEstateForm),
                             className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition'
                         }, '💾 Salvar Imobiliária'),
                         React.createElement('button', { 
@@ -758,7 +758,7 @@
                     ),
                     React.createElement('div', { className: 'flex gap-4 mt-6' },
                         React.createElement('button', { 
-                            onClick: () => handleSaveData('inquilinos', setShowTenantForm), // CORREÇÃO: Chama handleSaveData
+                            onClick: () => handleSaveData('inquilinos', setShowTenantForm), 
                             className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' 
                         }, '💾 Salvar Inquilino'),
                         React.createElement('button', { onClick: () => setShowTenantForm(false), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
@@ -817,7 +817,7 @@
                     ),
                     React.createElement('div', { className: 'flex gap-4 mt-6' },
                         React.createElement('button', { 
-                            onClick: () => handleSaveData('imoveis', setShowPropertyForm), // CORREÇÃO: Chama handleSaveData
+                            onClick: () => handleSaveData('imoveis', setShowPropertyForm), 
                             className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' 
                         }, '💾 Salvar Imóvel'),
                         React.createElement('button', { onClick: () => setShowPropertyForm(false), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
@@ -876,7 +876,7 @@
                     ),
                     React.createElement('div', { className: 'flex gap-4 mt-6' },
                         React.createElement('button', { 
-                            onClick: () => handleSaveData('financeiro', setShowFinanceForm), // CORREÇÃO: Chama handleSaveData
+                            onClick: () => handleSaveData('financeiro', setShowFinanceForm), 
                             className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' 
                         }, '💾 Registrar'),
                         React.createElement('button', { onClick: () => setShowFinanceForm(false), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
@@ -935,7 +935,7 @@
                     ),
                     React.createElement('div', { className: 'flex gap-4 mt-6' },
                         React.createElement('button', { 
-                            onClick: () => handleSaveData('contratos', setShowContractForm), // CORREÇÃO: Chama handleSaveData
+                            onClick: () => handleSaveData('contratos', setShowContractForm), 
                             className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' 
                         }, '💾 Salvar Contrato'),
                         React.createElement('button', { onClick: () => setShowContractForm(false), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
@@ -1062,7 +1062,7 @@
                     ),
                     React.createElement('div', { className: 'flex gap-4 mt-6' },
                     React.createElement('button', { 
-                        onClick: () => handleSaveData('espolios', setShowEstateForm), // CORREÇÃO: Chama handleSaveData
+                        onClick: () => handleSaveData('espolios', setShowEstateForm), 
                         className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold' 
                     },
                         '💾 Salvar Espólio'
@@ -1236,7 +1236,10 @@
                         )
                     ),
                     React.createElement('div', { className: 'flex gap-4 mt-6' },
-                        React.createElement('button', { onClick: () => { alert('Documento Salvo!'); setShowDocumentForm(false); }, className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' }, '💾 Salvar Documento'),
+                        React.createElement('button', { 
+                            onClick: () => handleSaveData('documentos', setShowDocumentForm), // CORREÇÃO: Chama handleSaveData
+                            className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' 
+                        }, '💾 Salvar Documento'),
                         React.createElement('button', { onClick: () => setShowDocumentForm(false), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
                     )
                 ),
