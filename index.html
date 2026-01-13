@@ -788,6 +788,22 @@
                     )
                     )
                 ),
+                /* BLOCO DE SUPORTE - GESTÃO MASTER */
+                React.createElement('div', { 
+                    className: 'bg-gradient-to-r from-blue-700 to-blue-500 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border-b-4 border-blue-900' 
+                },
+                    React.createElement('div', { className: 'flex items-center gap-5' },
+                        React.createElement('div', { className: 'text-5xl' }, '🆘'),
+                        React.createElement('div', null,
+                            React.createElement('h4', { className: 'text-2xl font-black uppercase tracking-tighter' }, 'Fale com o Suporte'),
+                            React.createElement('p', { className: 'text-blue-100 opacity-90' }, 'Clique no botão ao lado para iniciar uma conversa direta com nossa equipe técnica.')
+                        )
+                    ),
+                    React.createElement('button', { 
+                        onClick: () => window.open('https://wa.me/5511932186193', '_blank'),
+                        className: 'bg-white text-blue-700 px-10 py-4 rounded-xl font-black shadow-lg hover:bg-blue-50 transition transform hover:scale-105 uppercase text-sm'
+                    }, 'CHAMAR NO WHATSAPP')
+                ),
                 React.createElement('div', { className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 rounded-xl p-8 text-black shadow-lg' },
                     React.createElement('h2', { className: 'text-2xl font-bold mb-2' }, '👋 Bem-vindo, Fernando!'),
                     React.createElement('p', { className: 'text-gray-900 font-medium' }, 'Use o menu lateral para navegar entre os módulos do sistema.')
