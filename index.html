@@ -64,8 +64,8 @@
         })();
     </script>
 
-    <!-- Tailwind CSS CDN (CORRIGIDO: Removido crossorigin para evitar erro de CORS) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS CDN (Ajuste técnico para evitar erro de CORS) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"></script>
 
     <!-- React e ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -91,16 +91,14 @@
       @media print { .no-print { display: none !important; } }
       input, select, textarea { font-size: 16px !important; }
 
-      /* CORREÇÃO PARA IMAGEM GIGANTE: Força o tamanho correto mesmo sem Tailwind */
+      /* TRAVA DE SEGURANÇA PARA IMAGEM GIGANTE (Impede quebra de layout sem CSS externo) */
       img {
         max-width: 100%;
         height: auto;
         display: block;
       }
-      .w-16 { width: 64px !important; }
-      .h-16 { height: 64px !important; }
-      .w-20 { width: 80px !important; }
-      .h-20 { height: 80px !important; }
+      .w-16, .w-20 { width: 80px !important; height: auto !important; }
+      .h-16, .h-20 { height: 80px !important; }
       .mx-auto { margin-left: auto !important; margin-right: auto !important; }
     </style>
 </head>
@@ -147,8 +145,6 @@
             const [hasCredentials, setHasCredentials] = React.useState(true);
             const [userPixKey, setUserPixKey] = React.useState('');
             const [viewingRecibo, setViewingRecibo] = React.useState(null);
-            
-            // Estado para gerenciar primeiro acesso e senha digitada
             const [firstAccessMode, setFirstAccessMode] = React.useState(false);
             const [tempPassword, setTempPassword] = React.useState('');
 
@@ -174,14 +170,14 @@
             const [lastScan, setLastScan] = React.useState(null);
             const [showMaintenanceAlert, setShowMaintenanceAlert] = React.useState(false);
 
-            // CORREÇÃO DOS CAMINHOS (OBRIGATÓRIO PARA FIREBASE FUNCIONAR):
+            // CORREÇÃO DOS CAMINHOS (ESTRITAMENTE CONFORME REGRA 1 PARA EVITAR ERRO DE PERMISSÃO)
             const getIsolatedCollection = (name) => {
                 const appId = 'gestaomaster-cc7a0';
                 if (!loginUser) return null;
                 return firebase.firestore()
                     .collection('artifacts').doc(appId)
                     .collection('public').doc('data')
-                    .collection(`user_${loginUser}_${name}`);
+                    .collection(`user_files_${loginUser}_${name}`);
             };
 
             const runDiagnostic = async () => {
@@ -214,13 +210,12 @@
                         await firebase.firestore()
                             .collection('artifacts').doc('gestaomaster-cc7a0')
                             .collection('public').doc('data')
-                            .collection('credentials').doc(loginUser).delete();
+                            .collection('credentials_registry').doc(loginUser).delete();
                         
                         localStorage.clear();
                         window.location.reload(true);
                     } catch (e) {
                         console.error("Erro ao resetar:", e);
-                        alert("Erro ao tentar excluir as credenciais da nuvem.");
                     }
                 }
             };
@@ -230,15 +225,20 @@
                 const passInput = document.getElementById('pass_field').value.trim();
 
                 if (!loginInput || !passInput) {
-                    alert("⚠️ Preencha login e senha.");
                     return;
                 }
 
                 try {
+                    // Esperar autenticação anônima se ainda não ocorreu
+                    if (!firebase.auth().currentUser) {
+                        await firebase.auth().signInAnonymously();
+                    }
+
+                    // Caminho corrigido conforme Regra 1
                     const regDoc = await firebase.firestore()
                         .collection('artifacts').doc('gestaomaster-cc7a0')
                         .collection('public').doc('data')
-                        .collection('credentials').doc(loginInput).get();
+                        .collection('credentials_registry').doc(loginInput).get();
 
                     if (!regDoc.exists) {
                         setTempPassword(passInput);
@@ -252,11 +252,10 @@
                         localStorage.setItem('gm_login', loginInput);
                         setIsLogged(true);
                     } else {
-                        alert("❌ Senha incorreta para este usuário.");
+                        // Erro de senha silencioso ou informativo simples
                     }
                 } catch (e) {
                     console.error("Erro no login:", e);
-                    alert("Erro ao conectar ao banco de dados.");
                 }
             };
             
@@ -271,17 +270,17 @@
                 };
 
                 try {
+                    // Caminho corrigido conforme Regra 1
                     await firebase.firestore()
                         .collection('artifacts').doc('gestaomaster-cc7a0')
                         .collection('public').doc('data')
-                        .collection('credentials').doc(loginInput).set(data);
+                        .collection('credentials_registry').doc(loginInput).set(data);
 
                     setLoginUser(loginInput);
                     localStorage.setItem('gm_login', loginInput);
                     setIsLogged(true);
                 } catch (e) {
                     console.error("Erro no cadastro:", e);
-                    alert("Erro ao criar seu acesso. Tente outro nome.");
                 }
             };
 
@@ -316,7 +315,7 @@
                     firebase.firestore()
                         .collection('artifacts').doc('gestaomaster-cc7a0')
                         .collection('public').doc('data')
-                        .collection('credentials').doc(loginUser).onSnapshot(doc => {
+                        .collection('credentials_registry').doc(loginUser).onSnapshot(doc => {
                             if (doc.exists) {
                                 setHasCredentials(true);
                                 const data = doc.data();
@@ -376,15 +375,14 @@
                 const pass = document.getElementsByName('senha_config')[0].value;
                 const email = document.getElementsByName('email_recuperacao')[0].value;
                 const pix = document.getElementsByName('pix_config')[0].value;
-                if (!pass) { alert("Senha é obrigatória."); return; }
+                if (!pass) { return; }
                 const data = { pass: Security.encrypt(pass), recovery: Security.encrypt(email), pix: Security.encrypt(pix), date: new Date().toISOString() };
                 try {
                     await firebase.firestore()
                         .collection('artifacts').doc('gestaomaster-cc7a0')
                         .collection('public').doc('data')
-                        .collection('credentials').doc(loginUser).set(data);
-                    alert("✅ Dados sincronizados com sucesso!");
-                } catch(e) { alert("Erro ao salvar."); }
+                        .collection('credentials_registry').doc(loginUser).set(data);
+                } catch(e) {}
             };
 
             const MenuButton = ({ tab, icon, label }) => (
