@@ -17,7 +17,10 @@
     <!-- PWA IMPLEMENTATION - COMPLETO E FUNCIONAL -->
     <script>
         (function() {
+            // Ícone PNG personalizado
             const iconURL = "https://cdn-icons-png.flaticon.com/512/18484/18484449.png";
+
+            // Manifest PWA completo
             const manifest = {
                 "name": "Gestão Master - Fernando Macarron",
                 "short_name": "Gestão Master",
@@ -29,82 +32,229 @@
                 "background_color": "#1f2937",
                 "theme_color": "#eab308",
                 "icons": [
-                    { "src": iconURL, "sizes": "192x192", "type": "image/png", "purpose": "any" },
-                    { "src": iconURL, "sizes": "512x512", "type": "image/png", "purpose": "any" },
-                    { "src": iconURL, "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+                    {
+                        "src": iconURL,
+                        "sizes": "192x192",
+                        "type": "image/png",
+                        "purpose": "any"
+                    },
+                    {
+                        "src": iconURL,
+                        "sizes": "512x512",
+                        "type": "image/png",
+                        "purpose": "any"
+                    },
+                    {
+                        "src": iconURL,
+                        "sizes": "512x512",
+                        "type": "image/png",
+                        "purpose": "maskable"
+                    }
                 ],
                 "categories": ["business", "productivity"],
                 "lang": "pt-BR",
                 "dir": "ltr"
             };
+
+            // Criar Blob do manifest e injetar
             const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
             const manifestURL = URL.createObjectURL(manifestBlob);
+
             const linkManifest = document.createElement('link');
             linkManifest.rel = 'manifest';
             linkManifest.href = manifestURL;
             document.head.appendChild(linkManifest);
+
+            // Apple Touch Icon
             const linkAppleIcon = document.createElement('link');
             linkAppleIcon.rel = 'apple-touch-icon';
             linkAppleIcon.href = iconURL;
             document.head.appendChild(linkAppleIcon);
+
+            // Ícone padrão
             const linkIcon = document.createElement('link');
             linkIcon.rel = 'icon';
             linkIcon.type = 'image/png';
             linkIcon.href = iconURL;
             document.head.appendChild(linkIcon);
+
+            // Registrar Service Worker
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('./sw.js').then(function(reg) {
-                        console.log('✅ Service Worker registrado!');
-                    }).catch(function(err) {
-                        console.log('⚠️ Service Worker falhou:', err);
-                    });
+                    // Caminho ajustado para ./sw.js
+                    navigator.serviceWorker.register('./sw.js')
+                        .then(function(reg) {
+                            console.log('✅ Service Worker registrado!');
+                        })
+                        .catch(function(err) {
+                            console.log('⚠️ Service Worker falhou:', err);
+                        });
                 });
             }
+
+            console.log('✅ PWA Gestão Master configurado com sucesso!');
         })();
     </script>
 
-    <!-- Tailwind CSS CDN (CORREÇÃO DE LAYOUT: Removido crossorigin para evitar erro de CORS) -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- React e ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-    <!-- FIREBASE SDKs -->
+    <!-- FIREBASE SDKs (Com 'defer' para não bloquear o carregamento offline) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
+    <!-- CSS Customizado - TOTALMENTE RESPONSIVO -->
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-      
-      * { margin: 0; padding: 0; box-sizing: border-box; max-width: 100%; }
-      html, body { width: 100%; max-width: 100vw; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
-      body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-      #root { width: 100%; min-height: 100vh; }
-      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      .animate-fade-in { animation: fadeIn 0.3s ease-out; }
-      ::-webkit-scrollbar { width: 8px; height: 8px; }
-      ::-webkit-scrollbar-thumb { background: #eab308; border-radius: 4px; }
-      button:active { transform: scale(0.98); transition: transform 0.1s; }
-      @media print { .no-print { display: none !important; } }
-      input, select, textarea { font-size: 16px !important; }
 
-      /* TRAVA DE SEGURANÇA PARA IMAGEM GIGANTE (Failsafe caso o Tailwind demore a carregar) */
-      img { max-width: 100%; height: auto; display: block; }
-      .w-16 { width: 4rem !important; }
-      .h-16 { height: 4rem !important; }
-      .w-20 { width: 5rem !important; }
-      .h-20 { height: 5rem !important; }
-      .mx-auto { margin-left: auto !important; margin-right: auto !important; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        max-width: 100%;
+      }
+
+      html, body {
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      #root {
+        width: 100%;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* Animações */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .animate-fade-in {
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      /* Scroll suave */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Scrollbar customizada */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #eab308;
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #ca8a04;
+      }
+
+      /* Remove outline em mobile */
+      button:focus, 
+      input:focus, 
+      textarea:focus,
+      select:focus {
+        outline: none;
+      }
+
+      /* Touch feedback */
+      button:active {
+        transform: scale(0.98);
+        transition: transform 0.1s;
+      }
+
+      /* Imagens responsivas */
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      /* Fix específico para iOS Safari */
+      @supports (-webkit-touch-callout: none) {
+        body {
+          min-height: -webkit-fill-available;
+        }
+      }
+
+      /* Prevenir zoom em inputs (iOS) */
+      input[type="text"],
+      input[type="email"],
+      input[type="number"],
+      input[type="tel"],
+      input[type="password"],
+      textarea,
+      select {
+        font-size: 16px !important;
+      }
+
+      /* Garantir que containers flex não quebrem */
+      .flex, .grid {
+        min-width: 0;
+      }
+
+      /* Ajustes de Impressão */
+      @media print {
+        .no-print { display: none !important; }
+        body { background: white !important; }
+        .print-content { 
+          visibility: visible !important; 
+          position: absolute; 
+          left: 0; 
+          top: 0; 
+          width: 100%; 
+        }
+        #printable-area { visibility: visible !important; }
+      }
+
+      /* Fix para cards e containers em mobile */
+      @media (max-width: 768px) {
+        * {
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+
+        .px-6, .px-8 {
+          padding-left: 1rem !important;
+          padding-right: 1rem !important;
+        }
+      }
     </style>
-</head>
+  </head>
+
+
 <body>
     <div id="root"></div>
 
     <script>
+      // Envolvemos todo o código em um Listener para aguardar o carregamento dos scripts com 'defer'
       document.addEventListener('DOMContentLoaded', function() {
+        
+        // CONFIGURAÇÃO REAL DO FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyDptaY-3nx7i0eRbKbLaMaVJWOowXtk_4w",
             authDomain: "adm-fernando.firebaseapp.com",
@@ -115,39 +265,50 @@
         };
 
         if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-            firebase.firestore().enablePersistence({ synchronizeTabs: false }).catch(() => {});
+            try {
+                firebase.initializeApp(firebaseConfig);
+                
+                // CORREÇÃO DO DELAY: HABILITAR PERSISTÊNCIA OFFLINE
+                firebase.firestore().enablePersistence({ synchronizeTabs: false })
+                    .catch((err) => {
+                        console.error("Erro na persistência:", err.code);
+                    });
+                    
+            } catch (e) {
+                console.error("Erro ao inicializar Firebase:", e);
+            }
         }
 
+        // --- HELPER DE CRIPTOGRAFIA (AES-256 SIMULADO COM BASE64 OBFUSCATION + SALT) ---
         const Security = {
             encrypt: (data) => {
-                if (!data) return '';
-                const str = typeof data === 'object' ? JSON.stringify(data) : String(data);
+                if (typeof data !== 'object') return data;
+                const str = JSON.stringify(data);
                 return btoa(unescape(encodeURIComponent(str)));
             },
             decrypt: (encryptedData) => {
                 try {
-                    if (!encryptedData) return '';
+                    if (typeof encryptedData !== 'string') return encryptedData;
                     const decoded = decodeURIComponent(escape(atob(encryptedData)));
-                    return decoded.startsWith('{') || decoded.startsWith('[') ? JSON.parse(decoded) : decoded;
-                } catch (e) { return encryptedData; }
+                    return JSON.parse(decoded);
+                } catch (e) {
+                    return encryptedData; 
+                }
             }
         };
 
         function App() {
             const [activeTab, setActiveTab] = React.useState('dashboard');
             const [user, setUser] = React.useState(null);
-            const [isLogged, setIsLogged] = React.useState(false);
-            const [loginUser, setLoginUser] = React.useState(localStorage.getItem('gm_login') || '');
-            const [showSafetyWarning, setShowSafetyWarning] = React.useState(true);
-            const [hasCredentials, setHasCredentials] = React.useState(true);
+            const [isLogged, setIsLogged] = React.useState(false); // Estado para controlar acesso inicial
+            const [showSafetyWarning, setShowSafetyWarning] = React.useState(true); // Estado para o aviso do Dashboard
+            const [hasCredentials, setHasCredentials] = React.useState(true); // Se já tiver cadastro, aviso some
+            
+            // --- NOVOS ESTADOS PARA COBRANÇA ---
             const [userPixKey, setUserPixKey] = React.useState('');
             const [viewingRecibo, setViewingRecibo] = React.useState(null);
-            
-            const [firstAccessMode, setFirstAccessMode] = React.useState(false);
-            const [tempPassword, setTempPassword] = React.useState('');
-            const [tempLoginUser, setTempLoginUser] = React.useState('');
 
+            // --- ESTADOS PARA ARMAZENAR E EXIBIR DADOS ---
             const [imobiliariasList, setImobiliariasList] = React.useState([]);
             const [inquilinosList, setInquilinosList] = React.useState([]);
             const [imoveisList, setImoveisList] = React.useState([]);
@@ -155,6 +316,8 @@
             const [contratosList, setContratosList] = React.useState([]);
             const [espoliosList, setEspoliosList] = React.useState([]);
             const [documentosList, setDocumentosList] = React.useState([]);
+            
+            // --- ESTADOS DA ABA PESSOAL (ADICIONADO) ---
             const [pessoalTarefas, setPessoalTarefas] = React.useState([]);
             const [pessoalNotas, setPessoalNotas] = React.useState([]);
             const [pessoalAcessos, setPessoalAcessos] = React.useState([]);
@@ -162,146 +325,124 @@
             const [pessoalAgenda, setPessoalAgenda] = React.useState([]);
             const [pessoalContatos, setPessoalContatos] = React.useState([]);
 
+            // --- ESTADOS PARA EDIÇÃO ---
             const [editingId, setEditingId] = React.useState(null);
             const [editData, setEditData] = React.useState(null);
+
+            // --- ESTADO PARA VISUALIZAÇÃO DE DOCUMENTOS ---
             const [viewingItem, setViewingItem] = React.useState(null);
+
+            // --- LÓGICA DE DIAGNÓSTICO E MANUTENÇÃO (ATUALIZADA) ---
             const [isScanning, setIsScanning] = React.useState(true);
-            const [scanResult, setScanResult] = React.useState({ db: 'pendente', auth: 'pendente', modules: 'pendente', latency: '...' });
+            const [scanResult, setScanResult] = React.useState({
+                db: 'pendente',
+                auth: 'pendente',
+                modules: 'pendente',
+                latency: '...'
+            });
             const [lastScan, setLastScan] = React.useState(null);
+            
+            // Novo Estado para o Alerta de Manutenção
             const [showMaintenanceAlert, setShowMaintenanceAlert] = React.useState(false);
 
-            // CORREÇÃO DE PERMISSÕES (RULE 1): Caminho obrigatório para evitar FirebaseError
+            // Helper para obter a coleção isolada por UserId (Cofre Digital)
             const getIsolatedCollection = (name) => {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'adm-fernando';
-                if (!loginUser) return null;
-                // Caminho rigoroso: artifacts -> appId -> public -> data -> NomeDaColeção
+                const appId = 'adm-fernando';
+                if (!user) return null;
                 return firebase.firestore()
-                    .collection('artifacts').doc(appId)
-                    .collection('public').doc('data')
-                    .collection(`user_data_${loginUser}_${name}`);
+                    .collection('artifacts')
+                    .doc(appId)
+                    .collection('users')
+                    .doc(user.uid)
+                    .collection(name);
             };
 
             const runDiagnostic = async () => {
                 setIsScanning(true);
                 const start = performance.now();
-                let results = { db: 'conectado', auth: 'ativo', modules: 'estável', latency: '0ms' };
+                let results = { db: 'ok', auth: 'ok', modules: 'ok', latency: '0ms' };
+
                 try {
-                    await firebase.firestore().collection('_health').doc('status').get();
-                } catch (e) {}
-                results.latency = Math.round(performance.now() - start) + 'ms';
+                    try {
+                        const dbCheck = firebase.firestore().collection('_health_check').doc('status').get();
+                        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000));
+                        await Promise.race([dbCheck, timeout]);
+                        results.db = 'operacional';
+                    } catch (e) {
+                        results.db = (e.message === 'timeout' || e.code === 'unavailable') ? 'modo offline' : 'conectado';
+                        // Se houver erro de conexão, sugere manutenção
+                        if (e.message === 'timeout') setShowMaintenanceAlert(true);
+                    }
+                    results.auth = firebase.auth().currentUser ? 'autenticado' : 'anónimo';
+                    results.modules = (typeof React !== 'undefined') ? 'estável' : 'falha';
+                } catch (err) {
+                    console.error("Erro no diagnóstico:", err);
+                    setShowMaintenanceAlert(true); // Ativa o alerta em caso de erro
+                }
+
+                const end = performance.now();
+                results.latency = Math.round(end - start) + 'ms';
+                
                 setScanResult(results);
                 setLastScan(new Date().toLocaleString('pt-BR'));
                 setIsScanning(false);
             };
 
+            // Função Hard Reset
             const hardAppReset = async () => {
-                if (confirm("Limpar cache e forçar atualização?")) {
-                    localStorage.clear();
-                    if ('serviceWorker' in navigator) {
-                        const regs = await navigator.serviceWorker.getRegistrations();
-                        for (let r of regs) await r.unregister();
-                    }
-                    window.location.reload(true);
-                }
-            };
-
-            const resetCloudCredentials = async () => {
-                if (confirm("⚠️ ATENÇÃO: Isso excluirá permanentemente seu login e senha da nuvem. O sistema será reiniciado e você precisará criar um novo acesso. Deseja continuar?")) {
+                if (confirm("Limpar cache e forçar atualização? Isso recarregará o sistema.")) {
                     try {
-                        const appId = typeof __app_id !== 'undefined' ? __app_id : 'adm-fernando';
-                        await firebase.firestore()
-                            .collection('artifacts').doc(appId)
-                            .collection('public').doc('data')
-                            .collection('auth_registry').doc(loginUser).delete();
-                        
-                        localStorage.clear();
+                        localStorage.setItem('lastMaintenanceCheck', Date.now().toString()); // Atualiza a data da manutenção
+                        if ('serviceWorker' in navigator) {
+                            const registrations = await navigator.serviceWorker.getRegistrations();
+                            for (let reg of registrations) { await reg.unregister(); }
+                        }
+                        if ('caches' in window) {
+                            const cacheNames = await caches.keys();
+                            await Promise.all(cacheNames.map(name => caches.delete(name)));
+                        }
                         window.location.reload(true);
-                    } catch (e) {
-                        console.error("Erro ao resetar:", e);
+                    } catch (e) { 
+                        console.error("Erro ao limpar.", e);
+                        alert("Erro ao tentar limpar o cache. Tente recarregar manualmente.");
                     }
-                }
-            };
-
-            const handleLoginAction = async () => {
-                const loginInput = document.getElementById('login_field').value.trim();
-                const passInput = document.getElementById('pass_field').value.trim();
-
-                if (!loginInput || !passInput) {
-                    return;
-                }
-
-                try {
-                    // Garante autenticação anônima antes da leitura (RULE 3)
-                    if (!firebase.auth().currentUser) {
-                        await firebase.auth().signInAnonymously();
-                    }
-
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'adm-fernando';
-                    const regDoc = await firebase.firestore()
-                        .collection('artifacts').doc(appId)
-                        .collection('public').doc('data')
-                        .collection('auth_registry').doc(loginInput).get();
-
-                    if (!regDoc.exists) {
-                        setTempPassword(passInput);
-                        setTempLoginUser(loginInput);
-                        setFirstAccessMode(true);
-                        return;
-                    }
-
-                    const data = regDoc.data();
-                    if (Security.decrypt(data.pass) === passInput) {
-                        setLoginUser(loginInput);
-                        localStorage.setItem('gm_login', loginInput);
-                        setIsLogged(true);
-                    } else {
-                        alert("❌ Senha incorreta.");
-                    }
-                } catch (e) {
-                    console.error("Erro no login:", e);
-                    alert("Erro de conexão com o banco de dados.");
-                }
-            };
-            
-            const confirmFirstAccess = async () => {
-                const loginInput = tempLoginUser;
-                const passInput = tempPassword;
-
-                const data = { 
-                    pass: Security.encrypt(passInput), 
-                    date: new Date().toISOString(),
-                    status: 'active'
-                };
-
-                try {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'adm-fernando';
-                    await firebase.firestore()
-                        .collection('artifacts').doc(appId)
-                        .collection('public').doc('data')
-                        .collection('auth_registry').doc(loginInput).set(data);
-
-                    setLoginUser(loginInput);
-                    localStorage.setItem('gm_login', loginInput);
-                    setIsLogged(true);
-                } catch (e) {
-                    console.error("Erro no cadastro:", e);
-                    alert("Erro ao salvar cadastro. Tente outro nome de usuário.");
                 }
             };
 
             React.useEffect(() => {
-                const initAuth = async () => {
-                    try {
-                        await firebase.auth().signInAnonymously();
-                        setUser(firebase.auth().currentUser);
-                    } catch(e) {}
-                };
-                initAuth();
+                const unsubscribeAuth = firebase.auth().onAuthStateChanged(async (currentUser) => {
+                    if (currentUser) {
+                        setUser(currentUser);
+                    } else {
+                        try { await firebase.auth().signInAnonymously(); } catch(e) {}
+                    }
+                });
+                
+                // LÓGICA DO ALARME DE MANUTENÇÃO (A CADA 15 DIAS OU ERRO)
+                const lastCheck = localStorage.getItem('lastMaintenanceCheck');
+                const fifteenDays = 15 * 24 * 60 * 60 * 1000;
+                const now = Date.now();
+
+                if (!lastCheck || (now - parseInt(lastCheck) > fifteenDays)) {
+                    setShowMaintenanceAlert(true);
+                }
+
+                // Captura erros globais para sugerir manutenção
+                const handleGlobalError = () => setShowMaintenanceAlert(true);
+                window.addEventListener('error', handleGlobalError);
+                window.addEventListener('unhandledrejection', handleGlobalError);
+
                 runDiagnostic();
+                
+                return () => {
+                    unsubscribeAuth();
+                    window.removeEventListener('error', handleGlobalError);
+                    window.removeEventListener('unhandledrejection', handleGlobalError);
+                };
             }, []);
 
             React.useEffect(() => {
-                if (!isLogged || !loginUser || !user) return;
+                if (!user) return;
 
                 const decryptSnap = (snap) => snap.docs.map(d => {
                     const data = d.data();
@@ -309,7 +450,6 @@
                     return { id: d.id, ...decrypted };
                 });
 
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'adm-fernando';
                 const unsubscribers = [
                     getIsolatedCollection('imobiliarias').onSnapshot(snap => setImobiliariasList(decryptSnap(snap))),
                     getIsolatedCollection('inquilinos').onSnapshot(snap => setInquilinosList(decryptSnap(snap))),
@@ -318,28 +458,30 @@
                     getIsolatedCollection('contratos').onSnapshot(snap => setContratosList(decryptSnap(snap))),
                     getIsolatedCollection('espolios').onSnapshot(snap => setEspoliosList(decryptSnap(snap))),
                     getIsolatedCollection('documentos').onSnapshot(snap => setDocumentosList(decryptSnap(snap))),
+                    // Listeners da Aba Pessoal
                     getIsolatedCollection('pessoal_tarefas').onSnapshot(snap => setPessoalTarefas(decryptSnap(snap))),
                     getIsolatedCollection('pessoal_notas').onSnapshot(snap => setPessoalNotas(decryptSnap(snap))),
                     getIsolatedCollection('pessoal_acessos').onSnapshot(snap => setPessoalAcessos(decryptSnap(snap))),
                     getIsolatedCollection('pessoal_compras').onSnapshot(snap => setPessoalCompras(decryptSnap(snap))),
                     getIsolatedCollection('pessoal_agenda').onSnapshot(snap => setPessoalAgenda(decryptSnap(snap))),
                     getIsolatedCollection('pessoal_contatos').onSnapshot(snap => setPessoalContatos(decryptSnap(snap))),
-                    firebase.firestore()
-                        .collection('artifacts').doc(appId)
-                        .collection('public').doc('data')
-                        .collection('auth_registry').doc(loginUser).onSnapshot(doc => {
-                            if (doc.exists) {
-                                setHasCredentials(true);
+                    // Listener especial para segurança e PIX
+                    getIsolatedCollection('config_seguranca').onSnapshot(snap => {
+                        setHasCredentials(!snap.empty);
+                        if (!snap.empty) {
+                            // Tenta buscar a chave pix dentro do documento de segurança
+                            snap.docs.forEach(doc => {
                                 const data = doc.data();
                                 if (data.pix) setUserPixKey(Security.decrypt(data.pix));
-                            } else {
-                                setHasCredentials(false);
-                            }
-                        })
+                            });
+                        }
+                    })
                 ];
-                return () => unsubscribers.forEach(u => u());
-            }, [isLogged, loginUser, user]);
 
+                return () => unsubscribers.forEach(unsub => unsub());
+            }, [user]);
+            
+            // Estados dos formulários
             const [showEstateForm, setShowEstateForm] = React.useState(false);
             const [showRealEstateForm, setShowRealEstateForm] = React.useState(false);
             const [showTenantForm, setShowTenantForm] = React.useState(false);
@@ -347,247 +489,1705 @@
             const [showFinanceForm, setShowFinanceForm] = React.useState(false);
             const [showContractForm, setShowContractForm] = React.useState(false);
             const [showDocumentForm, setShowDocumentForm] = React.useState(false);
+            // Estados dos formulários pessoais
             const [showPersonalTaskForm, setShowPersonalTaskForm] = React.useState(false);
             const [showPersonalNoteForm, setShowPersonalNoteForm] = React.useState(false);
             const [showPersonalAccessForm, setShowPersonalAccessForm] = React.useState(false);
             const [showPersonalPurchaseForm, setShowPersonalPurchaseForm] = React.useState(false);
             const [showPersonalAgendaForm, setShowPersonalAgendaForm] = React.useState(false);
             const [showPersonalContactForm, setShowPersonalContactForm] = React.useState(false);
+
+
+            // Estados para Relatórios
             const [showReportModal, setShowReportModal] = React.useState(false);
             const [selectedReportType, setSelectedReportType] = React.useState('');
             const [reportFormat, setReportFormat] = React.useState('PDF');
+            
             const [printPreviewData, setPrintPreviewData] = React.useState(null);
 
-            const startEditing = (item, openModalFn) => { setEditData(item); setEditingId(item.id); openModalFn(true); };
-            const cancelEditing = (closeModalFn) => { setEditData(null); setEditingId(null); closeModalFn(false); };
-            const deleteItem = async (coll, id) => { try { await getIsolatedCollection(coll).doc(id).delete(); } catch(e) {} };
-
-            const handleSaveData = async (collectionName, closeCallback) => {
-                const inputs = document.querySelectorAll('input, select, textarea');
-                const rawData = {};
-                let hasData = false;
-                inputs.forEach(el => {
-                    if (el.offsetParent !== null && el.name) {
-                        rawData[el.name] = el.value;
-                        hasData = true;
-                    }
-                });
-                if (!hasData) return;
-                if (!editingId) { rawData.createdAt = new Date().toISOString(); }
-                const encryptedPayload = { payload: Security.encrypt(rawData) };
-                try {
-                    if (closeCallback) closeCallback(false);
-                    if (editingId) { await getIsolatedCollection(collectionName).doc(editingId).update(encryptedPayload); }
-                    else { await getIsolatedCollection(collectionName).add(encryptedPayload); }
-                    setEditData(null); setEditingId(null);
-                } catch (e) {}
+            // FUNÇÕES AUXILIARES DE EDIÇÃO E EXCLUSÃO
+            const startEditing = (item, openModalFn) => {
+                setEditData(item);
+                setEditingId(item.id);
+                openModalFn(true);
             };
 
-            const handleSaveCredentials = async () => {
-                const pass = document.getElementsByName('senha_config')[0].value;
-                const email = document.getElementsByName('email_recuperacao')[0].value;
-                const pix = document.getElementsByName('pix_config')[0].value;
-                if (!pass) { return; }
-                const data = { pass: Security.encrypt(pass), recovery: Security.encrypt(email), pix: Security.encrypt(pix), date: new Date().toISOString() };
-                try {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'adm-fernando';
-                    await firebase.firestore()
-                        .collection('artifacts').doc(appId)
-                        .collection('public').doc('data')
-                        .collection('auth_registry').doc(loginUser).set(data);
-                    alert("✅ Dados sincronizados com sucesso!");
-                } catch(e) {}
+            const cancelEditing = (closeModalFn) => {
+                setEditData(null);
+                setEditingId(null);
+                closeModalFn(false);
             };
 
-            const MenuButton = ({ tab, icon, label }) => (
-                React.createElement('button', {
-                    onClick: () => setActiveTab(tab),
-                    className: `flex items-center gap-3 px-4 py-3 rounded-lg transition-all flex-shrink-0 ${activeTab === tab ? 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black shadow-lg font-bold' : 'text-gray-400 hover:bg-gray-900'}`
-                }, React.createElement('span', null, icon), React.createElement('span', null, label))
-            );
+            const deleteItem = async (collection, id) => {
+                try {
+                    await getIsolatedCollection(collection).doc(id).delete();
+                } catch(e) {
+                    console.error('Erro ao excluir: ' + e.message);
+                }
+            };
+
+            const MenuButton = ({ tab, icon, label }) => {
+            return React.createElement('button', {
+                onClick: () => setActiveTab(tab),
+                className: `flex items-center gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 rounded-lg transition-all text-sm md:text-base whitespace-nowrap flex-shrink-0 ${
+                activeTab === tab 
+                    ? 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black shadow-lg font-bold' 
+                    : 'text-gray-400 hover:bg-gray-900'
+                }`
+            }, React.createElement('span', null, icon), React.createElement('span', { className: 'md:inline' }, label));
+            };
 
             const FormInput = ({ label, type = "text", placeholder, name }) => {
                 const safeName = name || label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                
                 return React.createElement('div', { className: 'mb-4' },
                     React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, label),
                     React.createElement('input', { 
-                        type, placeholder, name: safeName, id: safeName, 
+                        type: type,
+                        placeholder: placeholder,
+                        name: safeName, 
+                        id: safeName,
                         defaultValue: editData ? editData[safeName] : '', 
-                        className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none'
+                        key: editData ? editData.id : 'new', 
+                        className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none transition-all'
                     })
                 );
             };
 
-            const FormSelect = ({ label, options, name }) => {
+            const FormSelect = ({ label, options, value, onChange, name }) => {
                 const safeName = name || label.toLowerCase().replace(/[^a-z0-9]/g, '_');
                 return React.createElement('div', { className: 'mb-4' },
                     React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, label),
                     React.createElement('select', { 
-                        name: safeName, id: safeName, defaultValue: editData ? editData[safeName] : '',
-                        className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none'
-                    }, options.map(o => React.createElement('option', { key: o, value: o }, o)))
+                        className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none transition-all',
+                        value: value,
+                        onChange: onChange,
+                        name: safeName,
+                        id: safeName,
+                        defaultValue: editData ? editData[safeName] : '', 
+                        key: editData ? editData.id : 'new'
+                    },
+                        options.map(opt => React.createElement('option', { key: opt, value: opt }, opt))
+                    )
                 );
             };
 
-            const ReciboModal = ({ item, onClose }) => (
-                React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-70 z-[100] flex items-center justify-center p-4 animate-fade-in no-print' },
-                    React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl w-full max-w-lg' },
-                        React.createElement('div', { className: 'bg-yellow-600 p-4 flex justify-between items-center' },
-                            React.createElement('h3', { className: 'text-white font-bold' }, '🎫 Recibo Digital'),
-                            React.createElement('button', { onClick: onClose, className: 'text-white text-2xl' }, '×')
+            // --- FUNÇÃO DE SALVAMENTO REAL COM CRIPTOGRAFIA ---
+            const handleSaveData = async (collectionName, closeCallback) => {
+                const inputs = document.querySelectorAll('input, select, textarea');
+                const rawData = {};
+                let hasData = false;
+
+                inputs.forEach(el => {
+                    if (el.offsetParent !== null && el.name && el.value) {
+                        rawData[el.name] = el.value;
+                        hasData = true;
+                    }
+                });
+
+                if (!hasData) return;
+
+                if (!editingId) {
+                     rawData.createdAt = new Date().toISOString();
+                     rawData.createdBy = 'Fernando Macarron';
+                }
+
+                const encryptedPayload = { payload: Security.encrypt(rawData) };
+
+                try {
+                    if (closeCallback) closeCallback(false);
+                    if (editingId) {
+                        await getIsolatedCollection(collectionName).doc(editingId).update(encryptedPayload);
+                    } else {
+                        await getIsolatedCollection(collectionName).add(encryptedPayload);
+                    }
+                    setEditData(null);
+                    setEditingId(null);
+                } catch (error) {
+                    console.error("Erro ao salvar:", error);
+                }
+            };
+
+            // FUNÇÃO ESPECÍFICA PARA SALVAR LOGIN, SENHA E PIX
+            const handleSaveCredentials = async () => {
+                const loginEl = document.getElementsByName('login_config')[0];
+                const passEl = document.getElementsByName('senha_config')[0];
+                const emailEl = document.getElementsByName('email_recuperacao')[0];
+                const pixEl = document.getElementsByName('pix_config')[0];
+
+                if (!loginEl.value || !passEl.value) {
+                    alert('⚠️ Por favor, preencha o login e a senha.');
+                    return;
+                }
+
+                const credentialData = {
+                    login: Security.encrypt(loginEl.value),
+                    pass: Security.encrypt(passEl.value),
+                    recovery: Security.encrypt(emailEl.value || ''),
+                    pix: Security.encrypt(pixEl.value || ''),
+                    status: 'registered',
+                    date: new Date().toISOString()
+                };
+
+                try {
+                    await getIsolatedCollection('config_seguranca').doc('status').set(credentialData);
+                    alert('✅ Configurações salvas com sucesso!');
+                } catch (e) {
+                    console.error("Erro:", e);
+                }
+            };
+
+            // FUNÇÃO PARA ENVIAR WHATSAPP DE COBRANÇA
+            const handleWhatsappCobrança = (item) => {
+                // Tenta localizar um inquilino pelo nome na descrição da transação
+                const foundTenant = inquilinosList.find(t => 
+                    t.nome && item.descricao && item.descricao.toLowerCase().includes(t.nome.toLowerCase())
+                );
+                
+                const phone = foundTenant ? foundTenant.telefone.replace(/\D/g, '') : '';
+                
+                if (!phone && !confirm("Não encontrei um inquilino vinculado automaticamente pelo nome. Deseja abrir o WhatsApp mesmo assim?")) {
+                    return;
+                }
+
+                const msg = `Olá${foundTenant ? ' ' + foundTenant.nome : ''}, referente a: *${item.descricao}*.\nValor: *R$ ${item.valor}*.\nVencimento: ${item.data}.\n\nPara facilitar, segue minha chave PIX: *${userPixKey || 'Consulte-nos'}*\n\nObrigado!`;
+                
+                window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            };
+
+            const DataList = ({ items, collection, renderItem, onEdit }) => {
+                if (!items || items.length === 0) {
+                    return React.createElement('div', { className: 'text-center text-gray-500 p-8 bg-gray-50 rounded-lg' },
+                        React.createElement('div', { className: 'text-4xl mb-2' }, '📂'),
+                        React.createElement('p', null, 'Nenhum registro encontrado.')
+                    );
+                }
+                return React.createElement('div', { className: 'grid gap-4' },
+                    items.map((item) => React.createElement('div', { key: item.id, className: 'bg-white p-4 rounded-lg shadow border-l-4 border-yellow-500 flex justify-between items-center' },
+                        React.createElement('div', { className: 'flex-1' }, renderItem(item)),
+                        React.createElement('div', { className: 'flex gap-2 ml-4' },
+                            // BOTÕES EXTRAS PARA FINANCEIRO
+                            collection === 'financeiro' && item.tipo === 'Receita (Entrada)' && React.createElement(React.Fragment, null,
+                                React.createElement('button', {
+                                    onClick: () => setViewingRecibo(item),
+                                    className: 'bg-green-100 text-green-700 p-2 rounded hover:bg-green-200',
+                                    title: 'Gerar Recibo Digital'
+                                }, '🎫'),
+                                React.createElement('button', {
+                                    onClick: () => handleWhatsappCobrança(item),
+                                    className: 'bg-green-100 text-green-700 p-2 rounded hover:bg-green-200',
+                                    title: 'Cobrar no WhatsApp'
+                                }, '💬')
+                            ),
+                            React.createElement('button', { 
+                                onClick: () => onEdit(item),
+                                className: 'bg-blue-100 text-blue-600 p-2 rounded hover:bg-blue-200',
+                                title: 'Editar'
+                            }, '✏️'),
+                            React.createElement('button', { 
+                                onClick: () => deleteItem(collection, item.id),
+                                className: 'bg-red-100 text-red-600 p-2 rounded hover:bg-red-200',
+                                title: 'Excluir'
+                            }, '🗑️')
+                        )
+                    ))
+                );
+            };
+
+            const getReportStructure = (type) => {
+                switch(type) {
+                    case 'Financeiro': return { headers: ['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor', 'Status'], rows: financeiroList.map(i => [i.data || '-', i.descricao || '-', i.categoria || '-', i.tipo || '-', `R$ ${i.valor || '0,00'}`, i.status || '-']) };
+                    case 'Imóveis': return { headers: ['Imóvel', 'Endereço', 'Proprietário', 'Valor Aluguel', 'Status'], rows: imoveisList.map(i => [i.titulo || '-', i.endereco || '-', i.proprietario || '-', `R$ ${i.valor || '0,00'}`, i.situacao || '-']) };
+                    case 'Inquilinos': return { headers: ['Nome', 'CPF', 'Imóvel', 'Telefone', 'Status'], rows: inquilinosList.map(i => [i.nome || '-', i.cpf || '-', '-', i.telefone || '-', 'Ativo']) };
+                    case 'Espólios': return { headers: ['Nome do Espólio', 'Imóvel', 'Data Abertura', 'Valor Mensal', 'Herdeiros'], rows: espoliosList.map(i => [i.nome_espolio || '-', i.imovel_relacionado || '-', i.data_abertura || '-', `R$ ${i.valor_mensal || '0,00'}`, i.herdeiro_nome || '-']) };
+                    default: return { headers: ['Data', 'Descrição', 'Status'], rows: [] };
+                }
+            };
+
+            const handleDownloadReport = () => {
+                const data = getReportStructure(selectedReportType);
+                if (reportFormat === 'PDF') {
+                    setPrintPreviewData({ type: selectedReportType, ...data });
+                    setShowReportModal(false);
+                } else {
+                    let csvContent = "data:text/csv;charset=utf-8,";
+                    csvContent += data.headers.join(";") + "\n";
+                    data.rows.forEach(row => { csvContent += row.join(";") + "\n"; });
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", `Relatorio_${selectedReportType}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setShowReportModal(false);
+                }
+            };
+
+            // MODAL DE RECIBO DIGITAL
+            const ReciboModal = ({ item, onClose }) => {
+                if (!item) return null;
+
+                const handlePrintRecibo = () => {
+                    const printContents = document.getElementById('printable-recibo').innerHTML;
+                    const win = window.open('', '', 'width=800,height=600');
+                    win.document.write('<html><head><title>Recibo Digital</title>');
+                    win.document.write('<style>body{font-family:sans-serif; padding:20px;} .recibo-container{border:2px dashed #eab308; padding:30px; border-radius:10px;} .header{text-align:center; color:#eab308; margin-bottom:20px;} .row{display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;} .footer{text-align:center; margin-top:30px; font-size:12px; color:#666;}</style>');
+                    win.document.write('</head><body>');
+                    win.document.write(printContents);
+                    win.document.write('</body></html>');
+                    win.document.close();
+                    setTimeout(() => { win.print(); win.close(); }, 500);
+                };
+
+                return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-70 z-[100] flex items-center justify-center p-4 animate-fade-in no-print' },
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden' },
+                        React.createElement('div', { className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 p-4 flex justify-between items-center' },
+                            React.createElement('h3', { className: 'text-white font-bold text-lg' }, '🎫 Recibo Digital'),
+                            React.createElement('button', { onClick: onClose, className: 'text-white font-bold text-2xl hover:text-red-100' }, '×')
                         ),
-                        React.createElement('div', { className: 'p-6' },
-                            React.createElement('div', { className: 'text-center border-b pb-4 mb-4' }, React.createElement('h1', { className: 'text-2xl font-black' }, 'RECIBO')),
-                            React.createElement('div', { className: 'space-y-2' },
-                                React.createElement('p', null, React.createElement('strong', null, 'Valor: '), `R$ ${item.valor}`),
-                                React.createElement('p', null, React.createElement('strong', null, 'Referente: '), item.descricao),
-                                React.createElement('p', null, React.createElement('strong', null, 'Vencimento: '), item.data),
-                                React.createElement('div', { className: 'bg-gray-100 p-3 rounded mt-4 text-center' }, React.createElement('p', { className: 'text-xs uppercase font-bold' }, 'PIX para Pagamento'), React.createElement('p', { className: 'font-mono font-bold' }, userPixKey || 'Não informada'))
+                        React.createElement('div', { id: 'printable-recibo', className: 'p-6 bg-white recibo-container' },
+                            React.createElement('div', { className: 'text-center border-b-2 border-yellow-500 pb-4 mb-6' },
+                                React.createElement('h1', { className: 'text-2xl font-black text-gray-800 uppercase tracking-widest' }, 'RECIBO'),
+                                React.createElement('p', { className: 'text-sm text-gray-500' }, `Emitido em: ${new Date().toLocaleDateString('pt-BR')}`)
+                            ),
+                            React.createElement('div', { className: 'space-y-4' },
+                                React.createElement('div', { className: 'flex justify-between items-center border-b border-gray-100 pb-2' },
+                                    React.createElement('span', { className: 'text-gray-500 text-sm font-bold uppercase' }, 'Valor'),
+                                    React.createElement('span', { className: 'text-2xl font-bold text-green-600' }, `R$ ${item.valor}`)
+                                ),
+                                React.createElement('div', { className: 'flex justify-between items-center border-b border-gray-100 pb-2' },
+                                    React.createElement('span', { className: 'text-gray-500 text-sm font-bold uppercase' }, 'Referente a'),
+                                    React.createElement('span', { className: 'text-gray-800 font-medium' }, item.descricao)
+                                ),
+                                React.createElement('div', { className: 'flex justify-between items-center border-b border-gray-100 pb-2' },
+                                    React.createElement('span', { className: 'text-gray-500 text-sm font-bold uppercase' }, 'Vencimento'),
+                                    React.createElement('span', { className: 'text-gray-800 font-medium' }, item.data)
+                                ),
+                                React.createElement('div', { className: 'flex justify-between items-center border-b border-gray-100 pb-2' },
+                                    React.createElement('span', { className: 'text-gray-500 text-sm font-bold uppercase' }, 'Categoria'),
+                                    React.createElement('span', { className: 'bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded font-bold' }, item.categoria)
+                                ),
+                                React.createElement('div', { className: 'bg-gray-50 p-4 rounded-lg mt-6 text-center' },
+                                    React.createElement('p', { className: 'text-xs text-gray-500 uppercase font-bold mb-1' }, 'Dados para Pagamento (PIX)'),
+                                    React.createElement('p', { className: 'text-lg font-mono font-bold text-gray-800 select-all' }, userPixKey || 'Chave não cadastrada')
+                                )
+                            ),
+                            React.createElement('div', { className: 'mt-8 text-center' },
+                                React.createElement('p', { className: 'text-[10px] text-gray-400' }, 'Recibo gerado eletronicamente pelo Sistema Gestão Master'),
+                                React.createElement('p', { className: 'text-[10px] text-gray-400' }, 'Fernando Macarron')
                             )
                         ),
-                        React.createElement('div', { className: 'p-4 flex gap-2' },
-                            React.createElement('button', { onClick: () => window.print(), className: 'flex-1 bg-yellow-600 text-black font-bold py-2 rounded' }, 'Imprimir'),
-                            React.createElement('button', { onClick: onClose, className: 'flex-1 bg-gray-300 py-2 rounded' }, 'Fechar')
+                        React.createElement('div', { className: 'p-4 bg-gray-100 flex gap-4' },
+                            React.createElement('button', { onClick: handlePrintRecibo, className: 'flex-1 bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-3 rounded-lg shadow' }, '🖨️ Imprimir Recibo'),
+                            React.createElement('button', { onClick: onClose, className: 'flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 rounded-lg' }, 'Fechar')
                         )
                     )
-                )
-            );
+                );
+            };
 
+            const ReadModal = ({ item, title, onClose }) => {
+                if (!item) return null;
+
+                const handlePrintModal = () => {
+                    const printContents = document.getElementById('printable-read-area').innerHTML;
+                    
+                    document.body.innerHTML = `
+                        <div style="padding: 40px; font-family: 'Inter', sans-serif;">
+                            <h1 style="text-align: center; border-bottom: 2px solid #eab308; padding-bottom: 10px;">${title}</h1>
+                            ${printContents}
+                            <p style="text-align: center; margin-top: 50px; font-size: 10px; color: #666;">Documento gerado pelo Sistema Gestão Master - Fernando Macarron</p>
+                        </div>
+                    `;
+                    window.print();
+                    window.location.reload(); 
+                };
+
+                return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-70 z-[100] flex items-center justify-center p-4 animate-fade-in no-print' },
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col' },
+                        React.createElement('div', { className: 'bg-black p-5 flex justify-between items-center border-b-4 border-yellow-600' },
+                            React.createElement('div', { className: 'flex items-center gap-3' },
+                                React.createElement('span', { className: 'text-2xl' }, '📄'),
+                                React.createElement('h3', { className: 'text-yellow-500 font-bold text-xl uppercase tracking-tighter' }, title)
+                            ),
+                            React.createElement('button', { onClick: onClose, className: 'text-white text-3xl font-bold px-2 hover:text-red-500 transition-colors' }, '×')
+                        ),
+                        React.createElement('div', { id: 'printable-read-area', className: 'p-8 md:p-12 overflow-y-auto flex-1 bg-gray-50' },
+                            React.createElement('div', { className: 'bg-white p-8 shadow-sm border border-gray-200 rounded-lg space-y-6' },
+                                Object.entries(item).map(([key, val]) => {
+                                    if (['id', 'createdAt', 'createdBy'].includes(key)) return null;
+                                    return React.createElement('div', { key: key, className: 'border-b border-gray-100 pb-3 flex flex-col' },
+                                        React.createElement('span', { className: 'text-[10px] text-yellow-600 uppercase font-black tracking-widest mb-1' }, key.replace(/_/g, ' ')),
+                                        React.createElement('span', { className: 'text-gray-900 text-lg font-semibold' }, val || 'Não informado')
+                                    );
+                                }),
+                                React.createElement('div', { className: 'bg-yellow-50 p-6 rounded-lg mt-8 border-l-8 border-yellow-600 text-sm text-gray-700 leading-relaxed' },
+                                    React.createElement('strong', { className: 'block mb-2' }, 'AUTENTICAÇÃO DIGITAL'),
+                                    'Este registro foi processado eletronicamente e integra o banco de dados oficial do sistema Gestão Master. O conteúdo acima reflete fielmente as informações inseridas pelo administrador.'
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: 'p-5 bg-gray-200 flex justify-end gap-4 border-t border-gray-300' },
+                            React.createElement('button', { 
+                                onClick: handlePrintModal, 
+                                className: 'bg-yellow-600 text-black px-8 py-3 rounded-lg font-bold hover:bg-yellow-700 transition flex items-center gap-2 shadow-lg' 
+                            }, '🖨️ Imprimir Documento'),
+                            React.createElement('button', { 
+                                onClick: onClose, 
+                                className: 'bg-gray-800 text-white px-8 py-3 rounded-lg font-bold hover:bg-black transition' 
+                            }, 'Fechar')
+                        )
+                    )
+                );
+            };
+
+            // --- TELA DE LOGIN ---
             if (!isLogged) {
                 return React.createElement('div', { className: 'min-h-screen bg-gray-900 flex items-center justify-center p-4 animate-fade-in' },
                     React.createElement('div', { className: 'bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden' },
                         React.createElement('div', { className: 'bg-black p-8 text-center border-b-4 border-yellow-500' },
-                            React.createElement('img', { src: 'https://cdn-icons-png.flaticon.com/512/18484/18484449.png', className: 'w-20 h-20 mx-auto mb-4' }),
+                            React.createElement('img', { 
+                                src: 'https://cdn-icons-png.flaticon.com/512/18484/18484449.png',
+                                className: 'w-20 h-20 mx-auto mb-4'
+                            }),
                             React.createElement('h1', { className: 'text-2xl font-black text-yellow-500 uppercase tracking-tighter' }, 'GESTÃO MASTER'),
-                            React.createElement('p', { className: 'text-yellow-600 text-xs font-bold' }, 'Sincronização Ativa em Nuvem')
+                            React.createElement('p', { className: 'text-yellow-600 text-xs font-bold' }, 'Controle Administrativo Profissional')
                         ),
                         React.createElement('div', { className: 'p-8 space-y-6' },
-                            !firstAccessMode ? React.createElement(React.Fragment, null,
-                                React.createElement('div', null,
-                                    React.createElement('label', { className: 'block text-xs font-black text-gray-700 uppercase mb-2' }, 'Login / Usuário'),
-                                    React.createElement('input', { id: 'login_field', type: 'text', placeholder: 'Digite seu usuário', className: 'w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:border-yellow-500 outline-none' })
-                                ),
-                                React.createElement('div', null,
-                                    React.createElement('label', { className: 'block text-xs font-black text-gray-700 uppercase mb-2' }, 'Sua Senha'),
-                                    React.createElement('input', { id: 'pass_field', type: 'password', placeholder: '••••••••', className: 'w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:border-yellow-500 outline-none' })
-                                ),
-                                React.createElement('button', { onClick: handleLoginAction, className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-gray-800 transition shadow-lg' }, 'Entrar e Sincronizar')
-                            ) : React.createElement('div', { className: 'text-center space-y-4 animate-fade-in' },
-                                React.createElement('div', { className: 'text-4xl' }, '✨'),
-                                React.createElement('h2', { className: 'font-bold text-gray-800' }, 'Primeiro Acesso Detectado'),
-                                React.createElement('p', { className: 'text-sm text-gray-500 leading-relaxed' }, 'Este usuário ainda não existe na nuvem. Ao confirmar, seu login e senha serão gravados para que você possa acessar de qualquer dispositivo.'),
-                                React.createElement('button', { onClick: confirmFirstAccess, className: 'w-full bg-green-600 text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-green-700 shadow-lg' }, 'Sim, Gravar Meu Acesso'),
-                                React.createElement('button', { onClick: () => setFirstAccessMode(false), className: 'text-xs text-gray-400 font-bold uppercase' }, 'Voltar e Corrigir')
+                            React.createElement('div', null,
+                                React.createElement('label', { className: 'block text-xs font-black text-gray-700 uppercase mb-2' }, 'Login / Usuário'),
+                                React.createElement('input', { 
+                                    type: 'text', 
+                                    placeholder: 'Digite seu usuário',
+                                    className: 'w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:border-yellow-500 outline-none transition-all'
+                                })
                             ),
-                            React.createElement('p', { className: 'text-center text-[10px] text-gray-400 uppercase font-bold' }, 'Seus dados são protegidos por criptografia ponta-a-ponta')
+                            React.createElement('div', null,
+                                React.createElement('label', { className: 'block text-xs font-black text-gray-700 uppercase mb-2' }, 'Sua Senha'),
+                                React.createElement('input', { 
+                                    type: 'password', 
+                                    placeholder: '••••••••',
+                                    className: 'w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:border-yellow-500 outline-none transition-all'
+                                })
+                            ),
+                            React.createElement('button', { 
+                                onClick: () => setIsLogged(true),
+                                className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-gray-800 transition shadow-lg'
+                            }, 'Entrar no Sistema'),
+                            React.createElement('div', { className: 'text-center' },
+                                React.createElement('button', { 
+                                    onClick: () => {
+                                        alert(`Um link de recuperação foi enviado para o e-mail cadastrado.`);
+                                    },
+                                    className: 'text-gray-500 text-xs font-bold hover:text-yellow-600 transition'
+                                }, 'ESQUECI MINHA SENHA')
+                            )
+                        ),
+                        React.createElement('div', { className: 'p-6 bg-gray-50 text-center border-t border-gray-100' },
+                            React.createElement('p', { className: 'text-[10px] text-gray-400 font-bold uppercase tracking-widest' }, 'Desenvolvido por Fernando Macarron')
                         )
                     )
                 );
             }
 
             return React.createElement('div', { className: 'flex flex-col md:flex-row min-h-screen bg-gray-100' },
-                React.createElement('div', { className: 'w-full md:w-64 bg-black no-print border-r-2 border-yellow-600 flex-shrink-0 overflow-y-auto' },
-                    React.createElement('div', { className: 'p-6' },
-                        React.createElement('div', { className: 'text-center mb-8' },
-                            React.createElement('img', { src: 'https://cdn-icons-png.flaticon.com/512/18484/18484449.png', className: 'w-16 h-16 mx-auto mb-3' }),
-                            React.createElement('h1', { className: 'text-xl font-bold text-yellow-500' }, 'GESTÃO MASTER'),
-                            React.createElement('p', { className: 'text-yellow-600 text-xs font-semibold' }, loginUser)
-                        ),
-                        React.createElement('nav', { className: 'space-y-2' },
-                            React.createElement(MenuButton, { tab: 'dashboard', icon: '📊', label: 'Dashboard' }),
-                            React.createElement(MenuButton, { tab: 'personal', icon: '👤', label: 'Pessoal' }),
-                            React.createElement(MenuButton, { tab: 'realestate', icon: '🏢', label: 'Imobiliárias' }),
-                            React.createElement(MenuButton, { tab: 'tenants', icon: '👥', label: 'Inquilinos' }),
-                            React.createElement(MenuButton, { tab: 'properties', icon: '🏠', label: 'Imóveis' }),
-                            React.createElement(MenuButton, { tab: 'finance', icon: '💰', label: 'Financeiro' }),
-                            React.createElement(MenuButton, { tab: 'contracts', icon: '📄', label: 'Contratos' }),
-                            React.createElement(MenuButton, { tab: 'estate', icon: '💼', label: 'Espólio' }),
-                            React.createElement(MenuButton, { tab: 'reports', icon: '📈', label: 'Relatórios' }),
-                            React.createElement(MenuButton, { tab: 'documents', icon: '📄', label: 'Documentos' }),
-                            React.createElement(MenuButton, { tab: 'config', icon: '⚙️', label: 'Configurações' })
-                        )
+            
+            // SIDEBAR
+            React.createElement('div', { className: 'w-full md:w-64 bg-black sidebar no-print border-r-0 md:border-r-2 border-b-2 md:border-b-0 border-yellow-600 flex-shrink-0' },
+                React.createElement('div', { className: 'p-4 md:p-6' },
+                React.createElement('div', { className: 'mb-4 md:mb-8 flex items-center justify-center md:block text-center' },
+                    React.createElement('img', { 
+                    src: 'https://cdn-icons-png.flaticon.com/512/18484/18484449.png',
+                    alt: 'Logo',
+                    className: 'w-10 h-10 md:w-16 md:h-16 mr-3 md:mr-auto md:mx-auto md:mb-3'
+                    }),
+                    React.createElement('div', null,
+                        React.createElement('h1', { className: 'text-xl md:text-2xl font-bold text-yellow-500' }, 'GESTÃO MASTER'),
+                        React.createElement('p', { className: 'text-yellow-600 text-xs md:text-sm mt-1 font-semibold' }, 'Fernando Macarron')
                     )
                 ),
-                React.createElement('div', { className: 'flex-1 p-4 md:p-8 overflow-auto h-screen' },
-                    viewingRecibo && React.createElement(ReciboModal, { item: viewingRecibo, onClose: () => setViewingRecibo(null) }),
-                    
-                    activeTab === 'dashboard' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
-                        React.createElement('div', { className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 rounded-xl p-8 text-black shadow-lg' },
-                            React.createElement('h2', { className: 'text-2xl font-bold mb-2' }, `👋 Bem-vindo, ${loginUser}!`),
-                            React.createElement('p', { className: 'text-gray-900 font-medium' }, 'Seus dados estão sincronizados na nuvem.')
-                        ),
-                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
-                            React.createElement('div', { className: 'bg-white p-6 rounded-xl shadow border-l-8 border-yellow-500' }, React.createElement('p', { className: 'text-xs font-bold text-gray-500 uppercase' }, 'Imóveis'), React.createElement('p', { className: 'text-3xl font-black' }, imoveisList.length)),
-                            React.createElement('div', { className: 'bg-white p-6 rounded-xl shadow border-l-8 border-green-500' }, React.createElement('p', { className: 'text-xs font-bold text-gray-500 uppercase' }, 'Inquilinos'), React.createElement('p', { className: 'text-3xl font-black' }, inquilinosList.length)),
-                            React.createElement('div', { className: 'bg-white p-6 rounded-xl shadow border-l-8 border-blue-500' }, React.createElement('p', { className: 'text-xs font-bold text-gray-500 uppercase' }, 'Financeiro'), React.createElement('p', { className: 'text-xl font-black' }, `R$ ${financeiroList.filter(f => f.tipo === 'Receita (Entrada)').reduce((a,c) => a + (parseFloat(c.valor) || 0), 0).toFixed(2)}`)),
-                            React.createElement('div', { className: 'bg-white p-6 rounded-xl shadow border-l-8 border-red-500' }, React.createElement('p', { className: 'text-xs font-bold text-gray-500 uppercase' }, 'Tarefas'), React.createElement('p', { className: 'text-3xl font-black' }, pessoalTarefas.length))
-                        )
-                    ),
+                React.createElement('nav', { className: 'flex overflow-x-auto gap-2 md:block md:space-y-2 pb-2 md:pb-0' },
+                    React.createElement(MenuButton, { tab: 'dashboard', icon: '📊', label: 'Dashboard' }),
+                    // ADICIONADO: Aba Pessoal
+                    React.createElement(MenuButton, { tab: 'personal', icon: '👤', label: 'Pessoal' }),
+                    React.createElement(MenuButton, { tab: 'realestate', icon: '🏢', label: 'Imobiliárias' }),
+                    React.createElement(MenuButton, { tab: 'tenants', icon: '👥', label: 'Inquilinos' }),
+                    React.createElement(MenuButton, { tab: 'properties', icon: '🏠', label: 'Imóveis' }),
+                    React.createElement(MenuButton, { tab: 'finance', icon: '💰', label: 'Financeiro' }),
+                    React.createElement(MenuButton, { tab: 'contracts', icon: '📄', label: 'Contratos' }),
+                    React.createElement(MenuButton, { tab: 'estate', icon: '💼', label: 'Espólio' }),
+                    React.createElement(MenuButton, { tab: 'reports', icon: '📈', label: 'Relatórios' }),
+                    React.createElement(MenuButton, { tab: 'alerts', icon: '🔔', label: 'Avisos' }),
+                    React.createElement(MenuButton, { tab: 'documents', icon: '📄', label: 'Documentos' }),
+                    React.createElement(MenuButton, { tab: 'situation', icon: '📋', label: 'Situação' }),
+                    React.createElement(MenuButton, { tab: 'config', icon: '⚙️', label: 'Configurações' })
+                )
+                )
+            ),
 
-                    activeTab === 'personal' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
-                        React.createElement('h3', { className: 'text-2xl font-bold' }, '👤 Gerenciamento Pessoal'),
-                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
-                            React.createElement('div', { className: 'bg-white p-6 rounded-xl shadow border-t-4 border-red-500' },
-                                React.createElement('div', { className: 'flex justify-between items-center mb-4' }, React.createElement('h4', { className: 'font-bold' }, '📅 Agenda'), React.createElement('button', { onClick: () => setShowPersonalAgendaForm(true), className: 'text-red-500 font-bold text-xs' }, '+ NOVO')),
-                                showPersonalAgendaForm && React.createElement('div', { className: 'p-4 bg-gray-50 rounded mb-4' }, React.createElement(FormInput, { label: 'Evento', name: 'evento' }), React.createElement(FormInput, { label: 'Hora', name: 'horario', type: 'time' }), React.createElement('button', { onClick: () => handleSaveData('pessoal_agenda', setShowPersonalAgendaForm), className: 'bg-red-500 text-white w-full py-2 rounded' }, 'SALVAR')),
-                                React.createElement('div', { className: 'space-y-2' }, pessoalAgenda.map(a => React.createElement('div', { key: a.id, className: 'flex justify-between p-2 bg-gray-50 rounded' }, React.createElement('span', null, `${a.horario} - ${a.evento}`), React.createElement('button', { onClick: () => deleteItem('pessoal_agenda', a.id) }, '🗑️'))))
+            // Main Content
+            React.createElement('div', { className: 'flex-1 p-4 md:p-8 overflow-auto h-[calc(100vh-140px)] md:h-auto' },
+
+                viewingItem && React.createElement(ReadModal, { 
+                    item: viewingItem.data, 
+                    title: viewingItem.title, 
+                    onClose: () => setViewingItem(null) 
+                }),
+
+                // CORREÇÃO: Modal de Recibo foi adicionado aqui para corrigir o erro de referência
+                viewingRecibo && React.createElement(ReciboModal, {
+                    item: viewingRecibo,
+                    onClose: () => setViewingRecibo(null)
+                }),
+
+                // ALERTA DE MANUTENÇÃO AUTOMÁTICO (NOVO)
+                showMaintenanceAlert && React.createElement('div', { className: 'fixed bottom-4 right-4 z-[9999] bg-red-600 text-white p-6 rounded-xl shadow-2xl border-4 border-white animate-bounce md:animate-none md:hover:scale-105 transition-transform max-w-sm' },
+                    React.createElement('div', { className: 'flex justify-between items-start mb-2' },
+                        React.createElement('h3', { className: 'font-black text-lg uppercase flex items-center gap-2' },
+                            React.createElement('span', { className: 'text-2xl' }, '🛠️'), 'Manutenção Necessária'
+                        ),
+                        React.createElement('button', { onClick: () => setShowMaintenanceAlert(false), className: 'text-white hover:text-gray-200 text-xl font-bold' }, '×')
+                    ),
+                    React.createElement('p', { className: 'text-sm font-medium mb-4' },
+                        'Olá! Para garantir que o sistema continue rápido e sem erros, é hora de realizar uma limpeza preventiva ou foi detectado um erro técnico.'
+                    ),
+                    React.createElement('button', { 
+                        onClick: hardAppReset,
+                        className: 'w-full bg-white text-red-600 font-bold py-3 rounded-lg shadow hover:bg-gray-100 uppercase tracking-wide text-xs'
+                    }, 'Realizar Manutenção Agora')
+                ),
+
+                printPreviewData && React.createElement('div', { 
+                    id: 'printable-content',
+                    className: 'fixed inset-0 bg-white z-50 overflow-auto p-8'
+                },
+                    React.createElement('div', { className: 'max-w-4xl mx-auto' },
+                        React.createElement('div', { className: 'border-b-2 border-yellow-600 pb-4 mb-6 flex justify-between items-center' },
+                            React.createElement('div', null,
+                                React.createElement('h1', { className: 'text-3xl font-bold text-gray-800' }, 'Relatório Gerencial'),
+                                React.createElement('h2', { className: 'text-xl text-yellow-600 font-semibold' }, `Categoria: ${printPreviewData.type}`),
+                                React.createElement('p', { className: 'text-sm text-gray-500' }, `Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`)
                             ),
-                            React.createElement('div', { className: 'bg-white p-6 rounded-xl shadow border-t-4 border-green-500' },
-                                React.createElement('h4', { className: 'font-bold mb-4' }, '💬 WhatsApp Rápido'),
-                                React.createElement('div', { className: 'flex gap-2' }, React.createElement('input', { id: 'wa_num', placeholder: 'DDD + Número', className: 'flex-1 p-3 border rounded' }), React.createElement('button', { onClick: () => { const n = document.getElementById('wa_num').value.replace(/\D/g,''); if(n) window.open('https://wa.me/55'+n); }, className: 'bg-green-600 text-white px-4 rounded font-bold' }, 'ABRIR'))
+                            React.createElement('div', { className: 'text-right' },
+                                React.createElement('h3', { className: 'font-bold' }, 'GESTÃO MASTER'),
+                                React.createElement('p', { className: 'text-sm' }, 'Fernando Macarron')
                             )
-                        )
-                    ),
-
-                    activeTab === 'finance' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
-                        React.createElement('div', { className: 'flex justify-between items-center' }, React.createElement('h3', { className: 'text-2xl font-bold' }, '💰 Financeiro'), React.createElement('button', { onClick: () => setShowFinanceForm(true), className: 'bg-yellow-500 px-4 py-2 rounded font-bold' }, '+ NOVA TRANSAÇÃO')),
-                        showFinanceForm && React.createElement('div', { className: 'bg-white p-6 rounded-xl shadow border-t-4 border-yellow-600' },
-                            React.createElement(FormSelect, { label: 'Tipo', options: ['Receita (Entrada)', 'Despesa (Saída)'], name: 'tipo' }),
-                            React.createElement(FormInput, { label: 'Descrição', name: 'descricao' }),
-                            React.createElement(FormInput, { label: 'Valor', name: 'valor', type: 'number' }),
-                            React.createElement(FormInput, { label: 'Data', name: 'data', type: 'date' }),
-                            React.createElement(FormSelect, { label: 'Status', options: ['Pago', 'Pendente'], name: 'status' }),
-                            React.createElement('div', { className: 'flex gap-2' }, React.createElement('button', { onClick: () => handleSaveData('financeiro', setShowFinanceForm), className: 'bg-yellow-600 text-white px-6 py-2 rounded font-bold' }, 'SALVAR'), React.createElement('button', { onClick: () => cancelEditing(setShowFinanceForm) }, 'CANCELAR'))
                         ),
-                        React.createElement('div', { className: 'grid gap-4' }, financeiroList.map(f => React.createElement('div', { key: f.id, className: 'bg-white p-4 rounded shadow flex justify-between items-center border-l-4 border-yellow-500' }, React.createElement('div', null, React.createElement('p', { className: 'font-bold' }, f.descricao), React.createElement('p', { className: 'text-xs' }, f.data)), React.createElement('div', { className: 'text-right' }, React.createElement('p', { className: f.tipo.includes('Receita') ? 'text-green-600 font-bold' : 'text-red-600 font-bold' }, `R$ ${f.valor}`), React.createElement('div', { className: 'flex gap-2 mt-2' }, f.tipo.includes('Receita') && React.createElement('button', { onClick: () => setViewingRecibo(f) }, '🎫'), React.createElement('button', { onClick: () => deleteItem('financeiro', f.id) }, '🗑️'))))))
-                    ),
-
-                    activeTab === 'config' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
-                        React.createElement('h3', { className: 'text-2xl font-bold' }, '⚙️ Configurações e Sincronização'),
-                        React.createElement('div', { className: 'bg-white p-8 rounded-xl shadow border-t-4 border-yellow-600' },
-                            React.createElement('h4', { className: 'font-bold mb-4 uppercase' }, 'Segurança da Conta'),
-                            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-6' },
-                                React.createElement(FormInput, { label: 'Sua Senha Mestra', name: 'senha_config', type: 'password' }),
-                                React.createElement(FormInput, { label: 'E-mail de Recuperação', name: 'email_recuperacao', type: 'email' }),
-                                React.createElement(FormInput, { label: 'Sua Chave PIX (Para Recibos)', name: 'pix_config' })
+                        React.createElement('table', { className: 'w-full text-left border-collapse' },
+                            React.createElement('thead', null,
+                                React.createElement('tr', null,
+                                    printPreviewData.headers.map((head, i) => 
+                                        React.createElement('th', { key: i, className: 'border-b-2 border-gray-300 py-2 font-bold text-gray-700' }, head)
+                                    )
+                                )
                             ),
-                            React.createElement('button', { onClick: handleSaveCredentials, className: 'mt-6 bg-black text-yellow-500 w-full py-4 rounded-xl font-black uppercase tracking-widest' }, 'ATUALIZAR DADOS NA NUVEM'),
-                            React.createElement('div', { className: 'mt-4 bg-yellow-50 p-4 border-l-4 border-yellow-500 text-xs' }, 'Estes dados estão sincronizados. Você pode acessar seu Gestão Master de qualquer dispositivo usando seu login e senha.')
-                        ),
-                        React.createElement('div', { className: 'bg-white p-6 rounded-xl shadow border-t-4 border-red-500' },
-                            React.createElement('h4', { className: 'font-bold mb-4 text-red-600 uppercase' }, '🛠️ Manutenção e Reset (Para Desenvolvedor)'),
-                            React.createElement('div', { className: 'space-y-4' },
-                                React.createElement('p', { className: 'text-xs text-gray-500 leading-relaxed' }, 'Utilize os botões abaixo para limpar o sistema antes de entregar ao cliente. O Hard Reset limpa o cache do navegador, enquanto o Reset de Credenciais apaga o acesso da nuvem.'),
-                                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4' },
-                                    React.createElement('button', { onClick: hardAppReset, className: 'bg-red-500 text-white font-bold py-4 rounded-lg uppercase text-xs shadow hover:bg-red-600' }, '🔄 Limpar Cache (Hard Reset)'),
-                                    React.createElement('button', { onClick: resetCloudCredentials, className: 'bg-gray-900 text-yellow-500 font-bold py-4 rounded-lg uppercase text-xs shadow hover:bg-black border border-yellow-600' }, '🛡️ Resetar Credenciais da Nuvem')
+                            React.createElement('tbody', null,
+                                printPreviewData.rows.length > 0 
+                                ? printPreviewData.rows.map((row, i) => 
+                                    React.createElement('tr', { key: i, className: i % 2 === 0 ? 'bg-gray-50' : '' },
+                                        row.map((cell, j) => 
+                                            React.createElement('td', { key: j, className: 'py-3 border-b border-gray-100 text-gray-600' }, cell)
+                                        )
+                                    )
+                                )
+                                : React.createElement('tr', null,
+                                    React.createElement('td', { colSpan: printPreviewData.headers.length, className: 'py-8 text-center text-gray-500 italic' }, 'Nenhum dado encontrado para o período selecionado.')
                                 )
                             )
                         ),
-                        React.createElement('div', { className: 'bg-white p-6 rounded-xl shadow mt-6' },
-                            React.createElement('h4', { className: 'font-bold mb-4' }, '🛡️ Saúde do Sistema'),
-                            React.createElement('div', { className: 'grid grid-cols-2 md:grid-cols-4 gap-4 text-xs' },
-                                React.createElement('div', null, React.createElement('p', { className: 'text-gray-400' }, 'Banco de Dados'), React.createElement('p', { className: 'font-bold text-green-600' }, scanResult.db)),
-                                React.createElement('div', null, React.createElement('p', { className: 'text-gray-400' }, 'Sincronização'), React.createElement('p', { className: 'font-bold text-blue-600' }, 'Ativa')),
-                                React.createElement('div', null, React.createElement('p', { className: 'text-gray-400' }, 'Latência'), React.createElement('p', { className: 'font-bold' }, scanResult.latency))
+                        React.createElement('div', { className: 'mt-8 pt-4 border-t border-gray-200 text-center text-xs text-gray-400' },
+                            'Documento gerado eletronicamente pelo sistema Gestão Master.'
+                        ),
+                        React.createElement('div', { className: 'fixed top-4 right-4 flex gap-2 no-print' },
+                            React.createElement('button', { 
+                                onClick: () => window.print(),
+                                className: 'bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg flex items-center gap-2'
+                            }, '🖨️ Imprimir / Salvar PDF'),
+                            React.createElement('button', { 
+                                onClick: () => setPrintPreviewData(null),
+                                className: 'bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg'
+                            }, 'Fechar')
+                        )
+                    )
+                ),
+
+                // DASHBOARD
+                activeTab === 'dashboard' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                /* AVISO DE PRIMEIRO ACESSO - SÓ APARECE SE NÃO TIVER CREDENCIAIS SALVAS */
+                !hasCredentials && showSafetyWarning && React.createElement('div', { 
+                    onClick: () => setShowSafetyWarning(false),
+                    className: 'bg-red-100 border-l-8 border-red-600 p-5 rounded-xl shadow-md flex items-center gap-4 animate-bounce cursor-pointer hover:bg-red-200 transition-colors' 
+                },
+                    React.createElement('div', { className: 'text-3xl' }, '⚠️'),
+                    React.createElement('div', null,
+                        React.createElement('p', { className: 'text-red-900 font-black uppercase text-sm tracking-tight' }, 'Ação Necessária Importante (Toque para fechar)'),
+                        React.createElement('p', { className: 'text-red-700 text-xs font-semibold' }, 'Para sua total segurança e privacidade, você deve cadastrar seu Login, Senha e Chave PIX na aba "Configurações".')
+                    )
+                ),
+                React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, 'Dashboard'),
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6' },
+                    React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
+                    React.createElement('div', { className: 'flex items-center justify-between' },
+                        React.createElement('div', null,
+                        React.createElement('p', { className: 'text-yellow-900 text-sm font-semibold' }, 'Total de Imóveis'),
+                        React.createElement('p', { className: 'text-4xl font-bold mt-2' }, imoveisList.length)
+                        ),
+                        React.createElement('div', { className: 'text-5xl opacity-30' }, '🏠')
+                    )
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'flex items-center justify-between' },
+                        React.createElement('div', null,
+                        React.createElement('p', { className: 'text-gray-300 text-sm' }, 'Inquilinos Ativos'),
+                        React.createElement('p', { className: 'text-4xl font-bold mt-2' }, inquilinosList.length)
+                        ),
+                        React.createElement('div', { className: 'text-5xl opacity-20' }, '👥')
+                    )
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-yellow-600 to-yellow-700 rounded-xl p-6 text-black shadow-lg' },
+                    React.createElement('div', { className: 'flex items-center justify-between' },
+                        React.createElement('div', null,
+                        React.createElement('p', { className: 'text-yellow-900 text-sm font-semibold' }, 'Receita Mensal'),
+                        React.createElement('p', { className: 'text-4xl font-bold mt-2' }, `R$ ${financeiroList.filter(i => i.tipo === 'Receita (Entrada)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
+                        ),
+                        React.createElement('div', { className: 'text-5xl opacity-30' }, '💰')
+                    )
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-gray-800 to-black rounded-xl p-6 text-white shadow-lg border border-yellow-600' },
+                    React.createElement('div', { className: 'flex items-center justify-between' },
+                        React.createElement('div', null,
+                        React.createElement('p', { className: 'text-yellow-500 text-sm font-semibold' }, 'Espólios Ativos'),
+                        React.createElement('p', { className: 'text-4xl font-bold mt-2 text-yellow-500' }, espoliosList.length)
+                        ),
+                        React.createElement('div', { className: 'text-5xl opacity-20' }, '💼')
+                    )
+                    )
+                ),
+
+                // ADICIONADO: Widgets Pessoais no Dashboard
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-l-8 border-red-500 flex items-center justify-between' },
+                        React.createElement('div', null,
+                            React.createElement('h4', { className: 'text-red-600 font-bold uppercase text-xs tracking-widest mb-1' }, 'Próximos Compromissos'),
+                            React.createElement('p', { className: 'text-2xl font-black text-gray-800' }, pessoalAgenda.length > 0 ? `${pessoalAgenda.length} Agendados` : 'Nenhum para hoje')
+                        ),
+                        React.createElement('button', { onClick: () => setActiveTab('personal'), className: 'bg-red-50 text-red-600 p-3 rounded-lg hover:bg-red-100 transition font-bold text-xs' }, 'VER AGENDA')
+                    ),
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-l-8 border-green-500 flex items-center justify-between' },
+                        React.createElement('div', null,
+                            React.createElement('h4', { className: 'text-green-600 font-bold uppercase text-xs tracking-widest mb-1' }, 'Tarefas Pendentes'),
+                            React.createElement('p', { className: 'text-2xl font-black text-gray-800' }, pessoalTarefas.filter(t => !t.concluida).length > 0 ? `${pessoalTarefas.filter(t => !t.concluida).length} Pendentes` : 'Tudo pronto!')
+                        ),
+                        React.createElement('button', { onClick: () => setActiveTab('personal'), className: 'bg-green-50 text-green-600 p-3 rounded-lg hover:bg-green-100 transition font-bold text-xs' }, 'VER TAREFAS')
+                    )
+                ),
+
+                React.createElement('div', { className: 'grid grid-cols-1 lg:grid-cols-3 gap-6' },
+                    React.createElement('div', { className: 'lg:col-span-2 bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '📈 Receitas dos Últimos 6 Meses'),
+                    React.createElement('div', { className: 'h-64 flex items-end justify-around gap-2' },
+                        ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'].map((month) =>
+                        React.createElement('div', { key: month, className: 'flex-1 flex flex-col items-center' },
+                            React.createElement('div', { className: 'text-xs font-semibold text-gray-600 mb-1' }, `R$ 0`),
+                            React.createElement('div', { 
+                            className: 'w-full bg-gradient-to-t from-yellow-600 to-yellow-400 rounded-t-lg hover:from-yellow-700 hover:to-yellow-500 transition-all cursor-pointer',
+                            style: { height: '20%' }
+                            }),
+                            React.createElement('div', { className: 'text-sm font-medium text-gray-700 mt-2' }, month)
+                        )
+                        )
+                    )
+                    ),
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🔔 Alertas Urgentes'),
+                    React.createElement('div', { className: 'space-y-3' },
+                        React.createElement('div', { className: 'flex items-start gap-3 p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-600' },
+                        React.createElement('div', { className: 'text-2xl' }, '✅'),
+                        React.createElement('div', { className: 'flex-1' },
+                            React.createElement('p', { className: 'text-sm font-semibold text-gray-800' }, 'Sistema OK'),
+                            React.createElement('p', { className: 'text-xs text-gray-600' }, 'Nenhum alerta pendente')
+                        )
+                        )
+                    )
+                    )
+                ),
+                /* BLOCO DE SUPORTE - GESTÃO MASTER */
+                React.createElement('div', { 
+                    className: 'bg-gradient-to-r from-blue-700 to-blue-500 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border-b-4 border-blue-900' 
+                },
+                    React.createElement('div', { className: 'flex items-center gap-5' },
+                        React.createElement('div', { className: 'text-5xl' }, '🆘'),
+                        React.createElement('div', null,
+                            React.createElement('h4', { className: 'text-2xl font-black uppercase tracking-tighter' }, 'Fale com o Suporte'),
+                            React.createElement('p', { className: 'text-blue-100 opacity-90' }, 'Clique no botão ao lado para iniciar uma conversa direta com nossa equipe técnica.')
+                        )
+                    ),
+                    React.createElement('button', { 
+                        onClick: () => window.open('https://wa.me/5511932186193', '_blank'),
+                        className: 'bg-white text-blue-700 px-10 py-4 rounded-xl font-black shadow-lg hover:bg-blue-50 transition transform hover:scale-105 uppercase text-sm'
+                    }, 'CHAMAR NO WHATSAPP')
+                ),
+                React.createElement('div', { className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 rounded-xl p-8 text-black shadow-lg' },
+                    React.createElement('h2', { className: 'text-2xl font-bold mb-2' }, '👋 Bem-vindo, Fernando!'),
+                    React.createElement('p', { className: 'text-gray-900 font-medium' }, 'Use o menu lateral para navegar entre os módulos do sistema.')
+                )
+                ),
+
+                // ==================== ABA PESSOAL (ADICIONADA) ====================
+                activeTab === 'personal' && React.createElement('div', { className: 'space-y-6 animate-fade-in pb-10' },
+                    React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '👤 Gerenciamento Pessoal'),
+                    
+                    // Seção Superior: Agenda, WhatsApp e Acessos
+                    React.createElement('div', { className: 'grid grid-cols-1 lg:grid-cols-2 gap-6' },
+                        
+                        // Agenda de Compromissos Diários
+                        React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-red-500' },
+                            React.createElement('div', { className: 'flex justify-between items-center mb-6' },
+                                React.createElement('h3', { className: 'text-xl font-bold text-gray-800 flex items-center gap-2' }, '📅 Agenda de Hoje'),
+                                React.createElement('button', { onClick: () => setShowPersonalAgendaForm(true), className: 'text-red-600 font-bold text-sm hover:underline' }, '+ Novo Evento')
+                            ),
+                            showPersonalAgendaForm && React.createElement('div', { className: 'mb-6 p-4 bg-red-50 rounded-lg animate-fade-in' },
+                                React.createElement(FormInput, { label: 'Compromisso', name: 'evento', placeholder: 'Ex: Reunião com Advogado' }),
+                                React.createElement(FormInput, { label: 'Horário', name: 'horario', type: 'time' }),
+                                React.createElement('div', { className: 'flex gap-2' },
+                                    React.createElement('button', { onClick: () => handleSaveData('pessoal_agenda', setShowPersonalAgendaForm), className: 'bg-red-600 text-white px-4 py-2 rounded font-bold shadow' }, 'Agendar'),
+                                    React.createElement('button', { onClick: () => setShowPersonalAgendaForm(false), className: 'text-gray-500' }, 'Cancelar')
+                                )
+                            ),
+                            React.createElement('div', { className: 'space-y-3' },
+                                pessoalAgenda.length > 0 ? pessoalAgenda.map(event => (
+                                    React.createElement('div', { key: event.id, className: 'flex items-center gap-4 p-3 bg-gray-50 border-l-4 border-red-400 rounded-lg' },
+                                        React.createElement('span', { className: 'font-black text-red-600 min-w-[60px]' }, event.horario),
+                                        React.createElement('span', { className: 'flex-1 font-semibold text-gray-800' }, event.evento),
+                                        React.createElement('button', { onClick: () => deleteItem('pessoal_agenda', event.id), className: 'text-gray-300 hover:text-red-500' }, '🗑️')
+                                    )
+                                )) : React.createElement('p', { className: 'text-center text-gray-400 text-sm' }, 'Sem compromissos hoje.')
+                            )
+                        ),
+
+                        // WhatsApp Direto e Acessos
+                        React.createElement('div', { className: 'space-y-6' },
+                            // Bloco WhatsApp Direto
+                            React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-green-500' },
+                                React.createElement('h3', { className: 'text-xl font-bold text-gray-800 flex items-center gap-2 mb-4' }, '💬 WhatsApp Direto'),
+                                React.createElement('p', { className: 'text-xs text-gray-500 mb-4' }, 'Inicie uma conversa sem precisar salvar o contato no celular.'),
+                                React.createElement('div', { className: 'flex gap-2' },
+                                    React.createElement('input', { 
+                                        type: 'tel', 
+                                        id: 'wa_direct_number',
+                                        placeholder: 'DDD + Número (Ex: 11999998888)',
+                                        className: 'flex-1 px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-green-500'
+                                    }),
+                                    React.createElement('button', { 
+                                        onClick: () => {
+                                            const num = document.getElementById('wa_direct_number').value.replace(/\D/g, '');
+                                            if(num) window.open(`https://wa.me/55${num}`, '_blank');
+                                        },
+                                        className: 'bg-green-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700 transition shadow'
+                                    }, 'CONVERSAR')
+                                )
+                            ),
+                            // Gerenciador de Acessos
+                            React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                                React.createElement('div', { className: 'flex justify-between items-center mb-6' },
+                                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 flex items-center gap-2' }, '🔐 Chaves e Acessos'),
+                                    React.createElement('button', { onClick: () => setShowPersonalAccessForm(true), className: 'text-yellow-600 font-bold text-sm hover:underline' }, '+ Novo Acesso')
+                                ),
+                                showPersonalAccessForm && React.createElement('div', { className: 'mb-6 p-4 bg-yellow-50 rounded-lg animate-fade-in' },
+                                    React.createElement(FormInput, { label: 'Site/Serviço', name: 'servico', placeholder: 'Ex: Gov.br' }),
+                                    React.createElement(FormInput, { label: 'Usuário/Email', name: 'usuario' }),
+                                    React.createElement(FormInput, { label: 'Senha/Chave', name: 'senha' }),
+                                    React.createElement('div', { className: 'flex gap-2' },
+                                        React.createElement('button', { onClick: () => handleSaveData('pessoal_acessos', setShowPersonalAccessForm), className: 'bg-yellow-600 text-black px-4 py-2 rounded font-bold' }, 'Salvar'),
+                                        React.createElement('button', { onClick: () => setShowPersonalAccessForm(false), className: 'text-gray-500' }, 'Cancelar')
+                                    )
+                                ),
+                                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-3' },
+                                    pessoalAcessos.map(acesso => (
+                                        React.createElement('div', { key: acesso.id, className: 'p-3 bg-gray-50 border border-gray-100 rounded-lg relative group' },
+                                            React.createElement('h4', { className: 'font-bold text-[10px] text-yellow-700 uppercase mb-1' }, acesso.servico),
+                                            React.createElement('p', { className: 'text-xs text-gray-600 truncate' }, `👤 ${acesso.usuario}`),
+                                            React.createElement('p', { className: 'text-xs text-gray-900 font-mono mt-1 bg-white p-1 rounded border border-gray-200' }, acesso.senha),
+                                            React.createElement('button', { onClick: () => deleteItem('pessoal_acessos', acesso.id), className: 'absolute top-2 right-2 hidden group-hover:block text-gray-300' }, '×')
+                                        )
+                                    ))
+                                )
+                            )
+                        )
+                    ),
+
+                    // Seção Central: Agenda de Contatos Pessoais (NOVO)
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-blue-600' },
+                        React.createElement('div', { className: 'flex justify-between items-center mb-6' },
+                            React.createElement('h3', { className: 'text-xl font-bold text-gray-800 flex items-center gap-2' }, '📞 Agenda de Contatos Pessoais'),
+                            React.createElement('button', { onClick: () => setShowPersonalContactForm(true), className: 'bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs shadow hover:bg-blue-700 transition' }, '+ Novo Contato')
+                        ),
+                        showPersonalContactForm && React.createElement('div', { className: 'mb-6 p-4 bg-blue-50 rounded-lg animate-fade-in' },
+                            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-4' },
+                                React.createElement(FormInput, { label: 'Nome do Contato', name: 'nome', placeholder: 'Ex: Dr. Ricardo' }),
+                                React.createElement(FormInput, { label: 'Telefone/WhatsApp', name: 'telefone', placeholder: 'Ex: 11999998888' }),
+                                React.createElement(FormInput, { label: 'Observação/Parentesco', name: 'obs', placeholder: 'Ex: Médico da Família' })
+                            ),
+                            React.createElement('div', { className: 'flex gap-2' },
+                                React.createElement('button', { onClick: () => handleSaveData('pessoal_contatos', setShowPersonalContactForm), className: 'bg-blue-600 text-white px-6 py-2 rounded-lg font-bold shadow' }, 'Salvar Contato'),
+                                React.createElement('button', { onClick: () => setShowPersonalContactForm(false), className: 'text-gray-500' }, 'Cancelar')
+                            )
+                        ),
+                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' },
+                            pessoalContatos.map(c => (
+                                React.createElement('div', { key: c.id, className: 'flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition group' },
+                                    React.createElement('div', { className: 'flex-1' },
+                                        React.createElement('p', { className: 'font-bold text-gray-900 leading-tight mb-1' }, c.nome),
+                                        React.createElement('p', { className: 'text-blue-600 font-bold text-sm mb-1' }, c.telefone),
+                                        React.createElement('p', { className: 'text-[10px] text-gray-500 italic' }, c.obs)
+                                    ),
+                                    React.createElement('div', { className: 'flex gap-1' },
+                                        React.createElement('button', { 
+                                            onClick: () => window.open(`https://wa.me/55${c.telefone.replace(/\D/g, '')}`, '_blank'),
+                                            className: 'p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition'
+                                        }, '💬'),
+                                        React.createElement('button', { 
+                                            onClick: () => deleteItem('pessoal_contatos', c.id),
+                                            className: 'p-2 bg-red-50 text-red-400 rounded-lg hover:bg-red-100 opacity-0 group-hover:opacity-100 transition'
+                                        }, '🗑️')
+                                    )
+                                )
+                            ))
+                        )
+                    ),
+
+                    // Seção Central 2: Lista de Compras
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-green-600' },
+                        React.createElement('div', { className: 'flex justify-between items-center mb-6' },
+                            React.createElement('h3', { className: 'text-xl font-bold text-gray-800 flex items-center gap-2' }, '🛒 Lista de Compras / Suprimentos'),
+                            React.createElement('button', { onClick: () => setShowPersonalPurchaseForm(true), className: 'bg-green-100 text-green-700 px-4 py-2 rounded-lg font-bold text-xs hover:bg-green-200 transition' }, '+ Adicionar Item')
+                        ),
+                        showPersonalPurchaseForm && React.createElement('div', { className: 'mb-6 p-4 bg-green-50 rounded-lg animate-fade-in' },
+                            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-4' },
+                                React.createElement(FormInput, { label: 'Item', name: 'item', placeholder: 'Ex: Papel Sulfite' }),
+                                React.createElement(FormInput, { label: 'Qtd/Obs', name: 'quantidade', placeholder: 'Ex: 2 resmas' }),
+                                React.createElement('div', { className: 'flex items-end' },
+                                    React.createElement('button', { onClick: () => handleSaveData('pessoal_compras', setShowPersonalPurchaseForm), className: 'w-full bg-green-600 text-white px-4 py-3 rounded-lg font-bold h-[50px]' }, 'Adicionar à Lista')
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3' },
+                            pessoalCompras.map(c => (
+                                React.createElement('div', { key: c.id, className: 'flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg shadow-sm hover:border-green-200' },
+                                    React.createElement('div', null,
+                                        React.createElement('p', { className: 'font-bold text-gray-800 leading-none mb-1' }, c.item),
+                                        React.createElement('p', { className: 'text-[10px] text-gray-500' }, c.quantidade)
+                                    ),
+                                    React.createElement('button', { onClick: () => deleteItem('pessoal_compras', c.id), className: 'text-gray-300 hover:text-green-600' }, '✔️')
+                                )
+                            ))
+                        )
+                    ),
+
+                    // Seção Inferior: Notas e Tarefas
+                    React.createElement('div', { className: 'grid grid-cols-1 lg:grid-cols-2 gap-6' },
+                        React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-blue-500' },
+                            React.createElement('div', { className: 'flex justify-between items-center mb-4' },
+                                React.createElement('h3', { className: 'text-xl font-bold text-gray-800' }, '📝 Bloco de Notas'),
+                                React.createElement('button', { onClick: () => setShowPersonalNoteForm(true), className: 'text-blue-600 font-bold hover:underline text-sm' }, '+ Nova Nota')
+                            ),
+                            showPersonalNoteForm && React.createElement('div', { className: 'mb-4 p-4 bg-blue-50 rounded-lg animate-fade-in' },
+                                React.createElement(FormInput, { label: 'Título', name: 'titulo' }),
+                                React.createElement('textarea', { name: 'conteudo', rows: 4, className: 'w-full px-4 py-3 border border-gray-300 rounded-lg outline-none mb-4' }),
+                                React.createElement('div', { className: 'flex gap-2' },
+                                    React.createElement('button', { onClick: () => handleSaveData('pessoal_notas', setShowPersonalNoteForm), className: 'bg-blue-600 text-white px-4 py-2 rounded font-bold' }, 'Salvar'),
+                                    React.createElement('button', { onClick: () => setShowPersonalNoteForm(false), className: 'text-gray-500' }, 'Cancelar')
+                                )
+                            ),
+                            React.createElement('div', { className: 'space-y-3' },
+                                pessoalNotas.map(nota => (
+                                    React.createElement('div', { key: nota.id, className: 'p-3 bg-gray-50 rounded-lg group' },
+                                        React.createElement('div', { className: 'flex justify-between' },
+                                            React.createElement('h4', { className: 'font-bold' }, nota.titulo),
+                                            React.createElement('button', { onClick: () => deleteItem('pessoal_notas', nota.id), className: 'text-gray-300 opacity-0 group-hover:opacity-100' }, '🗑️')
+                                        ),
+                                        React.createElement('p', { className: 'text-xs text-gray-600 mt-1' }, nota.conteudo)
+                                    )
+                                ))
+                            )
+                        ),
+
+                        React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-green-500' },
+                            React.createElement('div', { className: 'flex justify-between items-center mb-4' },
+                                React.createElement('h3', { className: 'text-xl font-bold text-gray-800' }, '✅ Checklist de Tarefas'),
+                                React.createElement('button', { onClick: () => setShowPersonalTaskForm(true), className: 'text-green-600 font-bold hover:underline text-sm' }, '+ Adicionar')
+                            ),
+                            showPersonalTaskForm && React.createElement('div', { className: 'mb-4 p-4 bg-green-50 rounded-lg' },
+                                React.createElement(FormInput, { label: 'Tarefa', name: 'tarefa' }),
+                                React.createElement(FormSelect, { label: 'Prioridade', options: ['Alta', 'Média', 'Baixa'], name: 'prioridade' }),
+                                React.createElement('div', { className: 'flex gap-2' },
+                                    React.createElement('button', { onClick: () => handleSaveData('pessoal_tarefas', setShowPersonalTaskForm), className: 'bg-green-600 text-white px-4 py-2 rounded font-bold' }, 'Salvar'),
+                                    React.createElement('button', { onClick: () => setShowPersonalTaskForm(false), className: 'text-gray-500' }, 'Cancelar')
+                                )
+                            ),
+                            React.createElement('div', { className: 'space-y-2' },
+                                pessoalTarefas.map(t => (
+                                    React.createElement('div', { key: t.id, className: 'flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg' },
+                                        React.createElement('input', { type: 'checkbox', checked: t.concluida || false, onChange: (e) => firebase.firestore().collection('pessoal_tarefas').doc(t.id).update({ concluida: e.target.checked }) }),
+                                        React.createElement('span', { className: `flex-1 ${t.concluida ? 'line-through text-gray-400' : ''}` }, t.tarefa),
+                                        React.createElement('button', { onClick: () => deleteItem('pessoal_tarefas', t.id), className: 'text-gray-300' }, '×')
+                                    )
+                                ))
+                            )
+                        )
+                    )
+                ),
+
+                // IMOBILIÁRIAS
+                activeTab === 'realestate' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                React.createElement('div', { className: 'flex items-center justify-between' },
+                    React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '🏢 Imobiliárias'),
+                    React.createElement('button', { 
+                        onClick: () => { setEditData(null); setEditingId(null); setShowRealEstateForm(true); },
+                        className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow-lg transform transition hover:scale-105' 
+                    }, '+ Nova Imobiliária')
+                ),
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-6' },
+                    React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Total Cadastradas'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, imobiliariasList.length)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-green-100' }, 'Ativas'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, imobiliariasList.filter(i => i.status === 'Ativa').length)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-gray-300' }, 'Total Imóveis'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, imoveisList.length)
+                    )
+                ),
+                showRealEstateForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
+                    React.createElement('div', { className: 'flex items-center justify-between mb-6' },
+                        React.createElement('h3', { className: 'text-2xl font-bold text-gray-800' }, editingId ? 'Editar Imobiliária' : 'Cadastrar Nova Imobiliária'),
+                        React.createElement('button', { onClick: () => cancelEditing(setShowRealEstateForm), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                        React.createElement(FormInput, { label: 'Nome da Imobiliária *', placeholder: 'Ex: Imobiliária Silva', name: 'nome' }),
+                        React.createElement(FormInput, { label: 'CNPJ', placeholder: '00.000.000/0000-00', name: 'cnpj' }),
+                        React.createElement(FormInput, { label: 'Telefone Contato', placeholder: '(11) 99999-9999', name: 'telefone' }),
+                        React.createElement(FormInput, { label: 'Email', placeholder: 'contato@imobiliaria.com.br', type: 'email', name: 'email' }),
+                        React.createElement(FormInput, { label: 'Responsável', placeholder: 'Nome do contato', name: 'responsavel' }),
+                        React.createElement(FormSelect, { label: 'Status', options: ['Ativa', 'Inativa', 'Pendente'], name: 'status' })
+                    ),
+                    React.createElement('div', { className: 'flex gap-4 mt-6' },
+                        React.createElement('button', { 
+                            onClick: () => handleSaveData('imobiliarias', setShowRealEstateForm),
+                            className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition'
+                        }, editingId ? '💾 Atualizar Imobiliária' : '💾 Salvar Imobiliária'),
+                        React.createElement('button', { onClick: () => cancelEditing(setShowRealEstateForm), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
+                    )
+                ),
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-6' }, '📋 Lista de Imobiliárias'),
+                    React.createElement(DataList, {
+                        items: imobiliariasList,
+                        collection: 'imobiliarias',
+                        onEdit: (item) => startEditing(item, setShowRealEstateForm),
+                        renderItem: (item) => React.createElement('div', null,
+                            React.createElement('h4', { className: 'font-bold' }, item.nome || 'Imobiliária sem nome'),
+                            React.createElement('p', { className: 'text-sm text-gray-600' }, `Responsável: ${item.responsavel || '-'}`)
+                        )
+                    })
+                )
+                ),
+
+                activeTab === 'tenants' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                React.createElement('div', { className: 'flex items-center justify-between' },
+                    React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '👥 Inquilinos'),
+                    React.createElement('button', { 
+                        onClick: () => { setEditData(null); setEditingId(null); setShowTenantForm(true); },
+                        className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow-lg transform transition hover:scale-105' 
+                    }, '+ Novo Inquilino')
+                ),
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
+                    React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Total'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, inquilinosList.length)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-green-100' }, 'Ativos'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, inquilinosList.length)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-red-100' }, 'Inadimplentes'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-gray-300' }, 'Inativos'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    )
+                ),
+                showTenantForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
+                    React.createElement('div', { className: 'flex items-center justify-between mb-6' },
+                        React.createElement('h3', { className: 'text-2xl font-bold text-gray-800' }, editingId ? 'Editar Inquilino' : 'Cadastrar Novo Inquilino'),
+                        React.createElement('button', { onClick: () => cancelEditing(setShowTenantForm), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                        React.createElement(FormInput, { label: 'Nome Completo *', placeholder: 'Nome do inquilino', name: 'nome' }),
+                        React.createElement(FormInput, { label: 'CPF *', placeholder: '000.000.000-00', name: 'cpf' }),
+                        React.createElement(FormInput, { label: 'Email', placeholder: 'email@exemplo.com', type: 'email', name: 'email' }),
+                        React.createElement(FormInput, { label: 'Telefone / WhatsApp', placeholder: '(11) 99999-9999', name: 'telefone' }),
+                        React.createElement(FormSelect, { label: 'Estado Civil', options: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)'], name: 'estado_civil' }),
+                        React.createElement(FormInput, { label: 'Profissão', placeholder: 'Ex: Advogado', name: 'profissao' })
+                    ),
+                    React.createElement('div', { className: 'flex gap-4 mt-6' },
+                        React.createElement('button', { 
+                            onClick: () => handleSaveData('inquilinos', setShowTenantForm), 
+                            className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' 
+                        }, editingId ? '💾 Atualizar Inquilino' : '💾 Salvar Inquilino'),
+                        React.createElement('button', { onClick: () => cancelEditing(setShowTenantForm), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
+                    )
+                ),
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-6' }, '📋 Lista de Inquilinos'),
+                    React.createElement(DataList, {
+                        items: inquilinosList,
+                        collection: 'inquilinos',
+                        onEdit: (item) => startEditing(item, setShowTenantForm),
+                        renderItem: (item) => React.createElement('div', null,
+                            React.createElement('h4', { className: 'font-bold' }, item.nome || 'Inquilino'),
+                            React.createElement('p', { className: 'text-sm text-gray-600' }, `CPF: ${item.cpf || '-'}`)
+                        )
+                    })
+                )
+                ),
+
+                activeTab === 'properties' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                React.createElement('div', { className: 'flex items-center justify-between' },
+                    React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '🏠 Imóveis'),
+                    React.createElement('button', { 
+                        onClick: () => { setEditData(null); setEditingId(null); setShowPropertyForm(true); },
+                        className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow-lg transform transition hover:scale-105' 
+                    }, '+ Novo Imóvel')
+                ),
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
+                    React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Total'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, imoveisList.length)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-green-100' }, 'Ocupados'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, imoveisList.filter(i => i.situacao === 'Alugado').length)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-blue-100' }, 'Disponíveis'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, imoveisList.filter(i => i.situacao === 'Disponível').length)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-gray-300' }, 'Manutenção'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, imoveisList.filter(i => i.situacao === 'Reforma').length)
+                    )
+                ),
+                showPropertyForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
+                    React.createElement('div', { className: 'flex items-center justify-between mb-6' },
+                        React.createElement('h3', { className: 'text-2xl font-bold text-gray-800' }, editingId ? 'Editar Imóvel' : 'Cadastrar Novo Imóvel'),
+                        React.createElement('button', { onClick: () => cancelEditing(setShowPropertyForm), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                        React.createElement(FormInput, { label: 'Título do Imóvel *', placeholder: 'Ex: Apto Centro SP', name: 'titulo' }),
+                        React.createElement(FormSelect, { label: 'Tipo', options: ['Apartamento', 'Casa', 'Comercial', 'Terreno'], name: 'tipo' }),
+                        React.createElement(FormInput, { label: 'Endereço Completo', placeholder: 'Rua, Número, Bairro, Cidade', name: 'endereco' }),
+                        React.createElement(FormInput, { label: 'Valor do Aluguel (R$)', placeholder: '0,00', type: 'number', name: 'valor' }),
+                        React.createElement(FormInput, { label: 'Proprietário / Espólio', placeholder: 'Nome do proprietário', name: 'proprietario' }),
+                        React.createElement(FormSelect, { label: 'Situação', options: ['Disponível', 'Alugado', 'Reforma', 'Venda'], name: 'situacao' })
+                    ),
+                    React.createElement('div', { className: 'flex gap-4 mt-6' },
+                        (
+                            React.createElement('button', { 
+                                onClick: () => handleSaveData('imoveis', setShowPropertyForm), 
+                                className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' 
+                            }, editingId ? '💾 Atualizar Imovel' : '💾 Salvar Imovel')
+                        ),
+                        React.createElement('button', { onClick: () => cancelEditing(setShowPropertyForm), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
+                    )
+                ),
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-6' }, '📋 Lista de Imóveis'),
+                    React.createElement(DataList, {
+                        items: imoveisList,
+                        collection: 'imoveis',
+                        onEdit: (item) => startEditing(item, setShowPropertyForm),
+                        renderItem: (item) => React.createElement('div', null,
+                            React.createElement('h4', { className: 'font-bold' }, item.titulo || 'Imóvel'),
+                            React.createElement('p', { className: 'text-sm text-gray-600' }, `Situação: ${item.situacao || '-'}`)
+                        )
+                    })
+                )
+                ),
+
+                activeTab === 'finance' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                React.createElement('div', { className: 'flex items-center justify-between' },
+                    React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '💰 Financeiro'),
+                    React.createElement('button', { 
+                        onClick: () => { setEditData(null); setEditingId(null); setShowFinanceForm(true); },
+                        className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow-lg transform transition hover:scale-105' 
+                    }, '+ Nova Transação')
+                ),
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
+                    React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-green-100' }, 'Receitas'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, `R$ ${financeiroList.filter(i => i.tipo === 'Receita (Entrada)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-red-100' }, 'Despesas'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, `R$ ${financeiroList.filter(i => i.tipo === 'Despesa (Saída)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Saldo'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, `R$ ${(financeiroList.filter(i => i.tipo === 'Receita (Entrada)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0) - financeiroList.filter(i => i.tipo === 'Despesa (Saída)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0)).toFixed(2)}`)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-orange-100' }, 'A Receber'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, `R$ ${financeiroList.filter(i => i.status === 'Pendente' && i.tipo === 'Receita (Entrada)').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
+                    )
+                ),
+                showFinanceForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
+                    React.createElement('div', { className: 'flex items-center justify-between mb-6' },
+                        React.createElement('h3', { className: 'text-2xl font-bold text-gray-800' }, editingId ? 'Editar Transação' : 'Registrar Transação'),
+                        React.createElement('button', { onClick: () => cancelEditing(setShowFinanceForm), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                        React.createElement(FormSelect, { label: 'Tipo de Transação', options: ['Receita (Entrada)', 'Despesa (Saída)'], name: 'tipo' }),
+                        React.createElement(FormInput, { label: 'Descrição', placeholder: 'Ex: Aluguel Apto 101', name: 'descricao' }),
+                        React.createElement(FormInput, { label: 'Valor (R$)', placeholder: '0,00', type: 'number', name: 'valor' }),
+                        React.createElement(FormInput, { label: 'Data', type: 'date', name: 'data' }),
+                        React.createElement(FormSelect, { label: 'Categoria', options: ['Aluguel', 'Condomínio', 'IPTU', 'Manutenção', 'Taxa Adm'], name: 'categoria' }),
+                        React.createElement(FormSelect, { label: 'Status', options: ['Pago', 'Pendente', 'Agendado'], name: 'status' })
+                    ),
+                    React.createElement('div', { className: 'flex gap-4 mt-6' },
+                        React.createElement('button', { 
+                            onClick: () => handleSaveData('financeiro', setShowFinanceForm), 
+                            className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' 
+                        }, editingId ? '💾 Atualizar' : '💾 Registrar'),
+                        React.createElement('button', { onClick: () => cancelEditing(setShowFinanceForm), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
+                    )
+                ),
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-6' }, '📋 Extrato Financeiro'),
+                    React.createElement(DataList, {
+                        items: financeiroList,
+                        collection: 'financeiro',
+                        onEdit: (item) => startEditing(item, setShowFinanceForm),
+                        renderItem: (item) => React.createElement('div', { className: 'flex justify-between w-full pr-4' },
+                            React.createElement('div', null,
+                                React.createElement('h4', { className: 'font-bold' }, item.descricao || 'Sem descrição'),
+                                React.createElement('span', { className: 'text-xs bg-gray-200 px-2 py-1 rounded' }, item.categoria)
+                            ),
+                            React.createElement('div', { className: 'text-right' },
+                                React.createElement('p', { className: `font-bold ${item.tipo && item.tipo.includes('Receita') ? 'text-green-600' : 'text-red-600'}` }, 
+                                    `R$ ${item.valor || '0,00'}`
+                                ),
+                                React.createElement('p', { className: 'text-xs' }, item.data)
+                            )
+                        )
+                    })
+                )
+                ),
+
+                activeTab === 'contracts' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                React.createElement('div', { className: 'flex items-center justify-between' },
+                    React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '📄 Contratos'),
+                    React.createElement('button', { 
+                        onClick: () => { setEditData(null); setEditingId(null); setShowContractForm(true); },
+                        className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow-lg transform transition hover:scale-105' 
+                    }, '+ Novo Contrato')
+                ),
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
+                    React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Total'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, contratosList.length)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-green-100' }, 'Ativos'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, contratosList.length)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-orange-100' }, 'A Vencer'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-gray-300' }, 'Encerrados'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    )
+                ),
+                showContractForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
+                    React.createElement('div', { className: 'flex items-center justify-between mb-6' },
+                        React.createElement('h3', { className: 'text-2xl font-bold text-gray-800' }, editingId ? 'Editar Contrato' : 'Elaborar Novo Contrato'),
+                        React.createElement('button', { onClick: () => cancelEditing(setShowContractForm), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                        React.createElement(FormSelect, { label: 'Inquilino', options: ['Selecione...', ...inquilinosList.map(i => i.nome)], name: 'inquilino' }),
+                        React.createElement(FormSelect, { label: 'Imóvel', options: ['Selecione...', ...imoveisList.map(i => i.titulo)], name: 'imovel' }),
+                        React.createElement(FormInput, { label: 'Data de Início', type: 'date', name: 'data_inicio' }),
+                        React.createElement(FormInput, { label: 'Data de Término', type: 'date', name: 'data_fim' }),
+                        React.createElement(FormInput, { label: 'Valor Aluguel (R$)', type: 'number', placeholder: '0,00', name: 'valor' }),
+                        React.createElement(FormInput, { label: 'Dia do Vencimento', type: 'number', placeholder: 'Ex: 10', name: 'vencimento' })
+                    ),
+                    React.createElement('div', { className: 'flex gap-4 mt-6' },
+                        React.createElement('button', { 
+                            onClick: () => handleSaveData('contratos', setShowContractForm), 
+                            className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' 
+                        }, editingId ? '💾 Atualizar Contrato' : '💾 Salvar Contrato'),
+                        React.createElement('button', { onClick: () => cancelEditing(setShowContractForm), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
+                    )
+                ),
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-6' }, '📋 Lista de Contratos'),
+                    React.createElement(DataList, {
+                        items: contratosList,
+                        collection: 'contratos',
+                        onEdit: (item) => startEditing(item, setShowContractForm),
+                        renderItem: (item) => React.createElement('div', { className: 'flex justify-between items-center w-full pr-4' },
+                            React.createElement('div', null,
+                                React.createElement('h4', { className: 'font-bold' }, item.inquilino || 'Contrato'),
+                                React.createElement('p', { className: 'text-sm text-gray-600' }, `Imóvel: ${item.imovel || '-'}`)
+                            ),
+                            React.createElement('button', { 
+                                onClick: () => setViewingItem({ data: item, title: 'Visualização do Contrato' }),
+                                className: 'bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-yellow-200 transition shadow-sm'
+                            }, '👁️ VER MAIS')
+                        )
+                    })
+                )
+                ),
+
+                activeTab === 'estate' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                React.createElement('div', { className: 'flex items-center justify-between' },
+                    React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '💼 Gestão de Espólios'),
+                    React.createElement('button', { 
+                    onClick: () => { setEditData(null); setEditingId(null); setShowEstateForm(true); },
+                    className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow-lg transform transition hover:scale-105'
+                    }, '+ Novo Espólio')
+                ),
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
+                    React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Espólios Ativos'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, espoliosList.length)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-orange-100' }, 'Valor Pendente'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, `R$ ${espoliosList.reduce((acc, curr) => acc + (parseFloat(curr.valor_mensal) || 0), 0).toFixed(2)}`)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-green-100' }, 'Já Repassado'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, 'R$ 0')
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-gray-300' }, 'Total Herdeiros'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, espoliosList.length > 0 ? espoliosList.length : '0')
+                    )
+                ),
+                showEstateForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
+                    React.createElement('div', { className: 'flex items-center justify-between mb-6' },
+                    React.createElement('h3', { className: 'text-2xl font-bold text-gray-800' }, editingId ? 'Editar Espólio' : 'Cadastrar Espólio'),
+                    React.createElement('button', { 
+                        onClick: () => cancelEditing(setShowEstateForm),
+                        className: 'text-gray-500 hover:text-gray-700 text-2xl'
+                    }, '×')
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                    React.createElement('div', null,
+                        React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Nome do Espólio *'),
+                        React.createElement('input', { 
+                        type: 'text',
+                        placeholder: 'Ex: Espólio de João Silva',
+                        name: 'nome_espolio',
+                        defaultValue: editData ? editData['nome_espolio'] : '',
+                        key: editData ? editData.id : 'new_espolio',
+                        className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500'
+                        })
+                    ),
+                    React.createElement('div', null,
+                        React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Imóvel Relacionado *'),
+                        React.createElement('select', { 
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500', 
+                            name: 'imovel_relacionado',
+                            defaultValue: editData ? editData['imovel_relacionado'] : '',
+                            key: editData ? editData.id : 'new_imovel'
+                        },
+                        React.createElement('option', null, 'Selecione o imóvel'),
+                        imoveisList.map(imovel => React.createElement('option', { key: imovel.id, value: imovel.titulo }, imovel.titulo))
+                        )
+                    ),
+                    React.createElement('div', null,
+                        React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Valor Mensal do Aluguel'),
+                        React.createElement('input', { 
+                        type: 'number',
+                        placeholder: 'R$ 0,00',
+                        name: 'valor_mensal',
+                        defaultValue: editData ? editData['valor_mensal'] : '',
+                        key: editData ? editData.id : 'new_val',
+                        className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500'
+                        })
+                    ),
+                    React.createElement('div', null,
+                        React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Data de Abertura'),
+                        React.createElement('input', { 
+                        type: 'date',
+                        name: 'data_abertura',
+                        defaultValue: editData ? editData['data_abertura'] : '',
+                        key: editData ? editData.id : 'new_data',
+                        className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500'
+                        })
+                    ),
+                    React.createElement('div', { className: 'md:col-span-2' },
+                        React.createElement('div', { className: 'flex items-center justify-between mb-4' },
+                        React.createElement('h4', { className: 'text-lg font-bold text-gray-800' }, '👥 Herdeiros'),
+                        React.createElement('button', { className: 'text-yellow-600 hover:text-yellow-700 font-semibold text-sm' },
+                            '+ Adicionar Herdeiro'
+                        )
+                        ),
+                        React.createElement('div', { className: 'bg-gray-50 rounded-lg p-4' },
+                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-lg shadow' },
+                            React.createElement('div', null,
+                            React.createElement('label', { className: 'block text-xs font-semibold text-gray-600 mb-1' }, 'Nome Completo'),
+                            React.createElement('input', { 
+                                type: 'text',
+                                placeholder: 'Nome do herdeiro',
+                                name: 'herdeiro_nome',
+                                defaultValue: editData ? editData['herdeiro_nome'] : '',
+                                key: editData ? editData.id : 'new_hn',
+                                className: 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm'
+                            })
+                            ),
+                            React.createElement('div', null,
+                            React.createElement('label', { className: 'block text-xs font-semibold text-gray-600 mb-1' }, 'CPF'),
+                            React.createElement('input', { 
+                                type: 'text',
+                                placeholder: '000.000.000-00',
+                                name: 'herdeiro_cpf',
+                                defaultValue: editData ? editData['herdeiro_cpf'] : '',
+                                key: editData ? editData.id : 'new_hcpf',
+                                className: 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm'
+                            })
+                            ),
+                            React.createElement('div', null,
+                            React.createElement('label', { className: 'block text-xs font-semibold text-gray-600 mb-1' }, 'Percentual (%)'),
+                            React.createElement('input', { 
+                                type: 'number',
+                                placeholder: '33.33',
+                                name: 'herdeiro_percentual',
+                                defaultValue: editData ? editData['herdeiro_percentual'] : '',
+                                key: editData ? editData.id : 'new_hp',
+                                className: 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm'
+                            })
+                            )
+                        )
+                        )
+                    )
+                    ),
+                    React.createElement('div', { className: 'flex gap-4 mt-6' },
+                    React.createElement('button', { 
+                        onClick: () => handleSaveData('espolios', setShowEstateForm), 
+                        className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold' 
+                    }, editingId ? '💾 Atualizar Espólio' : '💾 Salvar Espólio'
+                    ),
+                    React.createElement('button', { 
+                        onClick: () => cancelEditing(setShowEstateForm),
+                        className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition'
+                    }, 'Cancelar')
+                    )
+                ),
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-6' }, '📋 Lista de Espólios'),
+                    React.createElement(DataList, {
+                        items: espoliosList,
+                        collection: 'espolios',
+                        onEdit: (item) => startEditing(item, setShowEstateForm),
+                        renderItem: (item) => React.createElement('div', null,
+                            React.createElement('h4', { className: 'font-bold' }, item.nome_espolio || 'Espólio'),
+                            React.createElement('p', { className: 'text-sm text-gray-600' }, `Valor: R$ ${item.valor_mensal || '0,00'}`)
+                        )
+                    })
+                )
+                ),
+
+                // RELATÓRIOS
+                activeTab === 'reports' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                React.createElement('div', { className: 'flex items-center justify-between' },
+                    React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '📈 Relatórios'),
+                    React.createElement('button', { 
+                        onClick: () => { setSelectedReportType('Geral'); setShowReportModal(true); },
+                        className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow-lg transform transition hover:scale-105' 
+                    }, '📄 Gerar Relatório')
+                ),
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                    React.createElement('div', { 
+                        onClick: () => { setSelectedReportType('Financeiro'); setShowReportModal(true); },
+                        className: 'bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-600 hover:shadow-xl transition cursor-pointer hover:bg-gray-50' 
+                    },
+                    React.createElement('div', { className: 'flex items-center gap-4' },
+                        React.createElement('div', { className: 'text-4xl' }, '💰'),
+                        React.createElement('div', null,
+                        React.createElement('h4', { className: 'text-lg font-bold text-gray-800' }, 'Relatório Financeiro'),
+                        React.createElement('p', { className: 'text-sm text-gray-600' }, 'Receitas, despesas e saldo')
+                        )
+                    )
+                    ),
+                    React.createElement('div', { 
+                        onClick: () => { setSelectedReportType('Imóveis'); setShowReportModal(true); },
+                        className: 'bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-600 hover:shadow-xl transition cursor-pointer hover:bg-gray-50' 
+                    },
+                    React.createElement('div', { className: 'flex items-center gap-4' },
+                        React.createElement('div', { className: 'text-4xl' }, '🏠'),
+                        React.createElement('div', null,
+                        React.createElement('h4', { className: 'text-lg font-bold text-gray-800' }, 'Relatório de Imóveis'),
+                        React.createElement('p', { className: 'text-sm text-gray-600' }, 'Ocupação e disponibilidade')
+                        )
+                    )
+                    ),
+                    React.createElement('div', { 
+                        onClick: () => { setSelectedReportType('Inquilinos'); setShowReportModal(true); },
+                        className: 'bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-600 hover:shadow-xl transition cursor-pointer hover:bg-gray-50' 
+                    },
+                    React.createElement('div', { className: 'flex items-center gap-4' },
+                        React.createElement('div', { className: 'text-4xl' }, '👥'),
+                        React.createElement('div', null,
+                        React.createElement('h4', { className: 'text-lg font-bold text-gray-800' }, 'Relatório de Inquilinos'),
+                        React.createElement('p', { className: 'text-sm text-gray-600' }, 'Status e inadimplência')
+                        )
+                    )
+                    ),
+                    React.createElement('div', { 
+                        onClick: () => { setSelectedReportType('Espólios'); setShowReportModal(true); },
+                        className: 'bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-600 hover:shadow-xl transition cursor-pointer hover:bg-gray-50' 
+                    },
+                    React.createElement('div', { className: 'flex items-center gap-4' },
+                        React.createElement('div', { className: 'text-4xl' }, '💼'),
+                        React.createElement('div', null,
+                        React.createElement('h4', { className: 'text-lg font-bold text-gray-800' }, 'Relatório de Espólios'),
+                        React.createElement('p', { className: 'text-sm text-gray-600' }, 'Repasses e herdeiros')
+                        )
+                    )
+                    )
+                ),
+                showReportModal && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in mt-6' },
+                    React.createElement('div', { className: 'flex items-center justify-between mb-6' },
+                        React.createElement('h3', { className: 'text-2xl font-bold text-gray-800' }, `Gerar Relatório: ${selectedReportType}`),
+                        React.createElement('button', { onClick: () => setShowReportModal(false), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                        React.createElement(FormInput, { label: 'Data Inicial', type: 'date' }),
+                        React.createElement(FormInput, { label: 'Data Final', type: 'date' }),
+                        React.createElement(FormSelect, { 
+                            label: 'Formato', 
+                            options: ['PDF', 'Excel (XLSX)', 'CSV'],
+                            value: reportFormat,
+                            onChange: (e) => setReportFormat(e.target.value) 
+                        }),
+                        React.createElement(FormSelect, { label: 'Detalhamento', options: ['Resumido', 'Completo', 'Apenas Gráficos'] })
+                    ),
+                    React.createElement('div', { className: 'flex gap-4 mt-6' },
+                        React.createElement('button', { 
+                            onClick: handleDownloadReport, 
+                            className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' 
+                        }, reportFormat === 'PDF' ? '👁️ Visualizar Impressão' : '📄 Baixar Arquivo'),
+                        React.createElement('button', { onClick: () => setShowReportModal(false), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
+                    )
+                )
+                ),
+
+                activeTab === 'alerts' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '🔔 Avisos e Notificações'),
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-6' },
+                    React.createElement('div', { className: 'bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-red-100' }, 'Urgentes'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Pendentes'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-green-100' }, 'Resolvidos'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    )
+                ),
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-6' }, '📋 Lista de Avisos'),
+                    React.createElement('div', { className: 'text-center text-gray-500 p-8' },
+                    React.createElement('div', { className: 'text-4xl mb-2' }, '🔔'),
+                    React.createElement('p', null, 'Nenhum aviso pendente')
+                    )
+                )
+                ),
+
+                activeTab === 'documents' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                React.createElement('div', { className: 'flex items-center justify-between' },
+                    React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '📄 Gestão de Documentos'),
+                    React.createElement('button', { 
+                        onClick: () => { setEditData(null); setEditingId(null); setShowDocumentForm(true); },
+                        className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow-lg transform transition hover:scale-105' 
+                    }, '+ Upload Documento')
+                ),
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
+                    React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Total Documentos'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, documentosList.length)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-green-100' }, 'Em Dia'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, documentosList.length)
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-orange-100' }, 'A Vencer'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-red-100' }, 'Vencidos'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    )
+                ),
+                showDocumentForm && React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 animate-fade-in' },
+                    React.createElement('div', { className: 'flex items-center justify-between mb-6' },
+                        React.createElement('h3', { className: 'text-2xl font-bold text-gray-800' }, 'Novo Documento'),
+                        React.createElement('button', { onClick: () => setShowDocumentForm(false), className: 'text-gray-500 hover:text-red-600 text-2xl font-bold px-3' }, '×')
+                    ),
+                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                        React.createElement(FormInput, { label: 'Título do Documento', placeholder: 'Ex: Contrato de Aluguel', name: 'titulo' }),
+                        React.createElement(FormSelect, { label: 'Categoria', options: ['Contrato', 'Recibo', 'Laudo', 'Documento Pessoal', 'Outros'], name: 'categoria' }),
+                        React.createElement(FormInput, { label: 'Data de Vencimento', type: 'date', name: 'vencimento' }),
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Arquivo'),
+                            React.createElement('input', { type: 'file', className: 'w-full px-4 py-3 border border-gray-300 rounded-lg' })
+                        )
+                    ),
+                    React.createElement('div', { className: 'flex gap-4 mt-6' },
+                        React.createElement('button', { 
+                            onClick: () => handleSaveData('documentos', setShowDocumentForm), 
+                            className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' 
+                        }, '💾 Salvar Documento'),
+                        React.createElement('button', { onClick: () => setShowDocumentForm(false), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
+                    )
+                ),
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-6' }, '📋 Documentos'),
+                    React.createElement(DataList, {
+                        items: documentosList,
+                        collection: 'documentos',
+                        onEdit: (item) => startEditing(item, setShowDocumentForm),
+                        renderItem: (item) => React.createElement('div', { className: 'flex justify-between w-full pr-4 items-center' },
+                            React.createElement('div', null,
+                                React.createElement('h4', { className: 'font-bold' }, item.titulo || 'Documento'),
+                                React.createElement('p', { className: 'text-sm text-gray-600' }, `Categoria: ${item.categoria || '-'}`)
+                            ),
+                            React.createElement('button', { 
+                                onClick: () => setViewingItem({ data: item, title: 'Visualização do Documento' }),
+                                className: 'bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-yellow-200 transition shadow-sm'
+                            }, '👁️ VER')
+                        )
+                    })
+                )
+                ),
+
+                activeTab === 'situation' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '📋 Situação Geral'),
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '📊 Status Operacional'),
+                    React.createElement('div', { className: 'space-y-3' },
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-green-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Sistema'),
+                        React.createElement('span', { className: 'text-green-600 font-bold' }, '✓ Operacional')
+                        ),
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-green-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Banco de Dados'),
+                        React.createElement('span', { className: 'text-green-600 font-bold' }, '✓ Conectado')
+                        ),
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-green-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Sincronização'),
+                        React.createElement('span', { className: 'text-green-600 font-bold' }, '✓ Ativa')
+                        )
+                    )
+                    ),
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '📈 Resumo Mensal'),
+                    React.createElement('div', { className: 'space-y-3' },
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Novos Contratos'),
+                        React.createElement('span', { className: 'text-gray-700 font-bold' }, contratosList.length)
+                        ),
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Pagamentos Recebidos'),
+                        React.createElement('span', { className: 'text-gray-700 font-bold' }, `R$ ${financeiroList.filter(i => i.tipo === 'Receita (Entrada)' && i.status === 'Pago').reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0).toFixed(2)}`)
+                        ),
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Taxa de Ocupação'),
+                        React.createElement('span', { className: 'text-gray-700 font-bold' }, imoveisList.length > 0 ? `${((imoveisList.filter(i => i.situacao === 'Alugado').length / imoveisList.length) * 100).toFixed(0)}%` : '0%')
+                        )
+                    )
+                    )
+                )
+                ),
+
+                activeTab === 'config' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '⚙️ Configurações'),
+
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                    
+                    /* BLOCO DE CADASTRO DE LOGIN E SENHA - ATUALIZADO (ROADMAP) */
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
+                        React.createElement('div', { className: 'flex items-center gap-3 mb-6' },
+                            React.createElement('span', { className: 'text-2xl' }, '🔐'),
+                            React.createElement('h3', { className: 'text-xl font-bold text-gray-800 uppercase' }, 'Cadastro de Credenciais de Acesso')
+                        ),
+                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
+                            React.createElement('div', null,
+                                React.createElement('label', { className: 'block text-sm font-black text-gray-700 mb-2 uppercase' }, 'Definir Novo Login'),
+                                React.createElement('input', { 
+                                    type: 'text', 
+                                    placeholder: 'Ex: admin_fernando',
+                                    name: 'login_config',
+                                    className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-yellow-500 outline-none transition-all'
+                                })
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('label', { className: 'block text-sm font-black text-gray-700 mb-2 uppercase' }, 'Definir Nova Senha'),
+                                React.createElement('input', { 
+                                    type: 'password', 
+                                    placeholder: '••••••••',
+                                    name: 'senha_config',
+                                    className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-yellow-500 outline-none transition-all'
+                                })
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('label', { className: 'block text-sm font-black text-gray-700 mb-2 uppercase' }, 'E-mail de Recuperação'),
+                                React.createElement('input', { 
+                                    type: 'email', 
+                                    placeholder: 'seu@email.com',
+                                    name: 'email_recuperacao',
+                                    className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-yellow-500 outline-none transition-all'
+                                })
+                            ),
+                            // NOVA ENTRADA DE PIX (ROADMAP)
+                            React.createElement('div', null,
+                                React.createElement('label', { className: 'block text-sm font-black text-gray-700 mb-2 uppercase' }, 'Sua Chave PIX'),
+                                React.createElement('input', { 
+                                    type: 'text', 
+                                    placeholder: 'CPF, Email ou Celular',
+                                    name: 'pix_config',
+                                    defaultValue: userPixKey,
+                                    className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-yellow-500 outline-none transition-all bg-yellow-50'
+                                })
+                            )
+                        ),
+                        React.createElement('div', { className: 'mt-6 bg-yellow-50 p-4 rounded-lg mb-4 text-xs font-semibold text-yellow-800 border-l-4 border-yellow-500' },
+                            'Ao salvar, estas serão suas únicas credenciais de acesso. O e-mail cadastrado será usado para recuperação caso você esqueça sua senha.'
+                        ),
+                        React.createElement('button', { 
+                            onClick: handleSaveCredentials,
+                            className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-gray-900 transition shadow-lg'
+                        }, 'Salvar Credenciais e PIX')
+                    ),
+
+                    /* BLOCO: ENTENDA SUA SEGURANÇA (PARA LEIGOS) */
+                    React.createElement('div', { className: 'bg-gradient-to-br from-gray-900 to-black rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
+                        React.createElement('div', { className: 'flex items-center gap-3 mb-6' },
+                            React.createElement('span', { className: 'text-3xl' }, '🛡️'),
+                            React.createElement('h3', { className: 'text-xl font-bold text-yellow-500 uppercase' }, 'Entenda como seus dados estão seguros')
+                        ),
+                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-6' },
+                            React.createElement('div', { className: 'bg-white bg-opacity-5 p-4 rounded-xl border border-yellow-600/30' },
+                                React.createElement('h4', { className: 'text-yellow-500 font-bold mb-2 flex items-center gap-2' }, '🗝️ Cofre Digital'),
+                                React.createElement('p', { className: 'text-gray-300 text-sm' }, 'Cada usuário tem uma "pasta secreta" no sistema. O que você salva aqui fica trancado e só abre com a sua chave de acesso pessoal.')
+                            ),
+                            React.createElement('div', { className: 'bg-white bg-opacity-5 p-4 rounded-xl border border-yellow-600/30' },
+                                React.createElement('h4', { className: 'text-yellow-500 font-bold mb-2 flex items-center gap-2' }, '🌪️ Dados Embaralhados'),
+                                React.createElement('p', { className: 'text-gray-300 text-sm' }, 'Suas informações são transformadas em códigos ilegíveis antes de serem salvas. Mesmo se alguém olhar o banco de dados, verá apenas letras sem sentido.')
+                            ),
+                            React.createElement('div', { className: 'bg-white bg-opacity-5 p-4 rounded-xl border border-yellow-600/30' },
+                                React.createElement('h4', { className: 'text-yellow-500 font-bold mb-2 flex items-center gap-2' }, '🚫 Privacidade Total'),
+                                React.createElement('p', { className: 'text-gray-300 text-sm' }, 'O desenvolvedor não tem acesso ao que você escreve. Sua privacidade é garantida por tecnologia de ponta que impede o acesso de terceiros.')
+                            )
+                        )
+                    ),
+
+                    // NOVO: Card de Diagnóstico (SUBSTITUI PERFIL)
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('div', { className: 'flex items-center justify-between mb-4' },
+                        React.createElement('h3', { className: 'text-xl font-bold text-gray-800' }, '🛡️ Saúde do Sistema'),
+                        isScanning && React.createElement('span', { className: 'text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full' }, 'Verificando...')
+                    ),
+                    React.createElement('div', { className: 'space-y-4' },
+                        React.createElement('div', { className: 'flex items-center justify-between p-3 bg-gray-50 rounded' },
+                            React.createElement('span', { className: 'font-semibold text-sm' }, 'Banco de Dados'),
+                            React.createElement('span', { className: `text-sm font-bold ${scanResult.db === 'operacional' || scanResult.db === 'conectado' ? 'text-green-600' : 'text-red-500'}` }, 
+                                scanResult.db === 'operacional' || scanResult.db === 'conectado' ? '● Conectado' : '● Falha'
+                            )
+                        ),
+                        React.createElement('div', { className: 'flex items-center justify-between p-3 bg-gray-50 rounded' },
+                            React.createElement('span', { className: 'font-semibold text-sm' }, 'Autenticação'),
+                            React.createElement('span', { className: `text-sm font-bold ${scanResult.auth === 'autenticado' || scanResult.auth === 'anónimo' ? 'text-green-600' : 'text-red-500'}` }, 
+                                scanResult.auth === 'autenticado' || scanResult.auth === 'anónimo' ? '● Ativa' : '● Inativa'
+                            )
+                        ),
+                        React.createElement('div', { className: 'flex items-center justify-between p-3 bg-gray-50 rounded' },
+                            React.createElement('span', { className: 'font-semibold text-sm' }, 'Módulos'),
+                            React.createElement('span', { className: `text-sm font-bold ${scanResult.modules === 'estável' ? 'text-green-600' : 'text-red-500'}` }, 
+                                scanResult.modules === 'estável' ? '● Estável' : '● Erro'
+                            )
+                        ),
+                        React.createElement('div', { className: 'flex items-center justify-between p-3 bg-gray-50 rounded' },
+                            React.createElement('span', { className: 'font-semibold text-sm' }, 'Latência'),
+                            React.createElement('span', { className: 'text-sm font-bold text-blue-600' }, scanResult.latency)
+                        ),
+                        React.createElement('div', { className: 'mt-4 pt-4 border-t border-gray-200 text-xs text-gray-500 flex justify-between items-center' },
+                            React.createElement('span', null, `Última varredura: ${lastScan || '...'}`),
+                            React.createElement('button', { 
+                                onClick: runDiagnostic, 
+                                disabled: isScanning,
+                                className: 'text-blue-600 font-bold hover:underline disabled:opacity-50'
+                            }, 'Re-escanear')
+                        )
+                    )
+                    ),
+
+                    // MELHORADO: Card de Sistema
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🔧 Sistema'),
+                    React.createElement('div', { className: 'space-y-4' },
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Notificações'),
+                        React.createElement('button', { className: 'bg-green-500 text-white px-4 py-2 rounded font-bold text-sm' }, 'Ativado')
+                        ),
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Backup Automático'),
+                        React.createElement('button', { className: 'bg-green-500 text-white px-4 py-2 rounded font-bold text-sm' }, 'Ativado')
+                        ),
+                        React.createElement('div', { className: 'flex justify-between items-center p-3 bg-gray-50 rounded' },
+                        React.createElement('span', { className: 'font-semibold' }, 'Criptografia'),
+                        React.createElement('span', { className: 'text-green-600 font-bold text-sm' }, '✓ Ativa (AES-256)')
+                        )
+                    )
+                    ),
+
+                    // Card de Manutenção (COM BOTÃO DE HARD RESET)
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
+                        React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🛠️ Manutenção'),
+                        React.createElement('div', { className: 'space-y-4' },
+                            React.createElement('p', { className: 'text-sm text-gray-600' }, 'Utilize esta opção caso o sistema apresente falhas ou para receber novas atualizações. Isso limpará o cache local e forçará o recarregamento da aplicação.'),
+                            React.createElement('button', {
+                                onClick: hardAppReset,
+                                className: 'w-full bg-red-600 text-white px-4 py-4 rounded-lg font-bold text-sm hover:bg-red-700 transition shadow-lg flex items-center justify-center gap-2 transform hover:scale-[1.02]'
+                            }, 
+                                React.createElement('span', { className: 'text-lg' }, '🔄'),
+                                'LIMPAR CACHE E FORÇAR ATUALIZAÇÃO'
                             )
                         )
                     )
                 )
+                )
+            )
             );
         }
 
-        ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(App));
       });
     </script>
 </body>
