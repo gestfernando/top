@@ -2,92 +2,1763 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#eab308">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Gestão Master">
-    <meta name="description" content="Sistema de Gestão Master - Fernando Macarron">
-
-    <title>GESTÃO MASTER - Fernando Macarron</title>
-
-    <script>
-        (function() {
-            const iconURL = "https://cdn-icons-png.flaticon.com/512/18484/18484449.png";
-
-            const manifest = {
-                "name": "Gestão Master - Fernando Macarron",
-                "short_name": "Gestão Master",
-                "description": "Sistema de Gestão Administrativa Master",
-                "start_url": "./",
-                "scope": "/",
-                "display": "standalone",
-                "orientation": "portrait-primary",
-                "background_color": "#1f2937",
-                "theme_color": "#eab308",
-                "icons": [
-                    {"src": iconURL, "sizes": "192x192", "type": "image/png", "purpose": "any"},
-                    {"src": iconURL, "sizes": "512x512", "type": "image/png", "purpose": "any"},
-                    {"src": iconURL, "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
-                ],
-                "categories": ["business", "productivity"],
-                "lang": "pt-BR",
-                "dir": "ltr"
-            };
-
-            const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-            const manifestURL = URL.createObjectURL(manifestBlob);
-
-            const linkManifest = document.createElement('link');
-            linkManifest.rel = 'manifest';
-            linkManifest.href = manifestURL;
-            document.head.appendChild(linkManifest);
-
-            const linkAppleIcon = document.createElement('link');
-            linkAppleIcon.rel = 'apple-touch-icon';
-            linkAppleIcon.href = iconURL;
-            document.head.appendChild(linkAppleIcon);
-
-            const linkIcon = document.createElement('link');
-            linkIcon.rel = 'icon';
-            linkIcon.type = 'image/png';
-            linkIcon.href = iconURL;
-            document.head.appendChild(linkIcon);
-
-            // Service Worker silencioso (só registra se estiver em HTTP/HTTPS)
-            if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-                window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('./sw.js')
-                        .then(reg => console.log('✅ SW registrado'))
-                        .catch(err => console.log('⚠️ SW:', err.message));
-                });
-            }
-        })();
-    </script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistema de Gestão Imobiliária PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js" defer></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin defer></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin defer></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js" defer></script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-      * { margin: 0; padding: 0; box-sizing: border-box; max-width: 100%; }
-      html, body { width: 100%; max-width: 100vw; overflow-x: hidden; }
-      body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-      #root { width: 100%; min-height: 100vh; overflow-x: hidden; }
-      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      .animate-fade-in { animation: fadeIn 0.3s ease-out; }
-      ::-webkit-scrollbar { width: 8px; }
-      ::-webkit-scrollbar-thumb { background: #eab308; border-radius: 4px; }
-      button:active { transform: scale(0.98); }
-      input[type="text"], input[type="email"], input[type="password"], textarea, select { font-size: 16px !important; }
-      @media print { .no-print { display: none !important; } }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html, body {
+        height: 100%;
+        width: 100%;
+        overflow-x: hidden;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      #root {
+        min-height: 100vh;
+        width: 100%;
+      }
+
+      /* Prevenir bounce scroll no iOS */
+      body {
+        overscroll-behavior-y: none;
+      }
+
+      /* Melhorar performance de animações */
+      * {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      button, a {
+        touch-action: manipulation;
+      }
+
+      /* Prevenir seleção de texto em elementos UI */
+      button, .no-select {
+        -webkit-user-select: none;
+        user-select: none;
+      }
+
+      /* Melhorar cliques em mobile */
+      button {
+        cursor: pointer;
+        transition: transform 0.1s;
+      }
+
+      /* Imagens responsivas */
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      /* Fix específico para iOS Safari */
+      @supports (-webkit-touch-callout: none) {
+        body {
+          min-height: -webkit-fill-available;
+        }
+      }
+
+      /* Prevenir zoom em inputs (iOS) */
+      input[type="text"],
+      input[type="email"],
+      input[type="number"],
+      input[type="tel"],
+      input[type="password"],
+      textarea,
+      select {
+        font-size: 16px !important;
+      }
+
+      /* Garantir que containers flex não quebrem */
+      .flex, .grid {
+        min-width: 0;
+      }
+
+      /* Ajustes de Impressão */
+      @media print {
+        .no-print { display: none !important; }
+        body { background: white !important; }
+        .print-content { 
+          visibility: visible !important; 
+          position: absolute; 
+          left: 0; 
+          top: 0; 
+          width: 100%; 
+        }
+      }
+
+      @media (max-width: 768px) {
+        /* Ajustes mobile */
+        input, select, textarea {
+          font-size: 16px !important;
+        }
+      }
     </style>
 </head>
 <body>
     <div id="root"></div>
-    <script>
+
+    <script type="text/babel">
+      // Envolvemos todo o código em um Listener para aguardar o carregamento dos scripts com 'defer'
+      document.addEventListener('DOMContentLoaded', function() {
+        
+        // CONFIGURAÇÃO REAL DO FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyDptaY-3nx7i0eRbKbLaMaVJWOowXtk_4w",
+            authDomain: "adm-fernando.firebaseapp.com",
+            projectId: "adm-fernando",
+            storageBucket: "adm-fernando.firebasestorage.app",
+            messagingSenderId: "299527487486",
+            appId: "1:299527487486:web:301a342f98652e795c4aaf"
+        };
+
+        if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                
+                // CORREÇÃO DO DELAY: HABILITAR PERSISTÊNCIA OFFLINE
+                firebase.firestore().enablePersistence({ synchronizeTabs: false })
+                    .catch((err) => {
+                        console.error("Erro na persistência:", err.code);
+                    });
+                    
+            } catch (e) {
+                console.error("Erro ao inicializar Firebase:", e);
+            }
+        }
+
+        // --- HELPER DE CRIPTOGRAFIA (AES-256 SIMULADO COM BASE64 OBFUSCATION + SALT) ---
+        const Security = {
+            encrypt: (data) => {
+                if (typeof data !== 'object') return data;
+                const str = JSON.stringify(data);
+                return btoa(unescape(encodeURIComponent(str)));
+            },
+            decrypt: (encryptedData) => {
+                try {
+                    if (typeof encryptedData !== 'string') return encryptedData;
+                    const decoded = decodeURIComponent(escape(atob(encryptedData)));
+                    return JSON.parse(decoded);
+                } catch (e) {
+                    return encryptedData; 
+                }
+            }
+        };
+
+        function App() {
+            const [user, setUser] = React.useState(null);
+            const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+            const [hasCredentials, setHasCredentials] = React.useState(false);
+            const [showLoginForm, setShowLoginForm] = React.useState(true);
+            const [showCreateAccount, setShowCreateAccount] = React.useState(false);
+            const [showForgotPassword, setShowForgotPassword] = React.useState(false);
+
+            // Estados das coleções
+            const [imoveis, setImoveis] = React.useState([]);
+            const [imobiliarias, setImobiliarias] = React.useState([]);
+            const [inquilinos, setInquilinos] = React.useState([]);
+            const [propriedades, setPropriedades] = React.useState([]);
+            const [financas, setFinancas] = React.useState([]);
+            const [contratos, setContratos] = React.useState([]);
+            const [documentos, setDocumentos] = React.useState([]);
+            const [userPixKey, setUserPixKey] = React.useState('');
+            
+            // Estados pessoais
+            const [pessoalTarefas, setPessoalTarefas] = React.useState([]);
+            const [pessoalNotas, setPessoalNotas] = React.useState([]);
+            const [pessoalAcessos, setPessoalAcessos] = React.useState([]);
+            const [pessoalCompras, setPessoalCompras] = React.useState([]);
+            const [pessoalAgenda, setPessoalAgenda] = React.useState([]);
+            const [pessoalContatos, setPessoalContatos] = React.useState([]);
+
+            // Helper para criar chave isolada (sem uso de email do user.email, mas sim de um ID único)
+            const getIsolatedCollection = (collectionName) => {
+                if (!user) return null;
+                const isolatedKey = user.uid || 'anonymous';
+                return firebase.firestore().collection(`${isolatedKey}_${collectionName}`);
+            };
+
+            // Helper para descriptografar snapshots
+            const decryptSnap = (snapshot) => {
+                return snapshot.docs.map(doc => {
+                    const encryptedData = doc.data();
+                    return { id: doc.id, ...Security.decrypt(encryptedData.data || encryptedData) };
+                });
+            };
+
+            // Efeito que verifica se existem credenciais configuradas
+            React.useEffect(() => {
+                if (!user) return;
+
+                const unsubscribers = [
+                    getIsolatedCollection('imoveis').onSnapshot(snap => setImoveis(decryptSnap(snap))),
+                    getIsolatedCollection('imobiliarias').onSnapshot(snap => setImobiliarias(decryptSnap(snap))),
+                    getIsolatedCollection('inquilinos').onSnapshot(snap => setInquilinos(decryptSnap(snap))),
+                    getIsolatedCollection('propriedades').onSnapshot(snap => setPropriedades(decryptSnap(snap))),
+                    getIsolatedCollection('financas').onSnapshot(snap => setFinancas(decryptSnap(snap))),
+                    getIsolatedCollection('contratos').onSnapshot(snap => setContratos(decryptSnap(snap))),
+                    getIsolatedCollection('documentos').onSnapshot(snap => setDocumentos(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_tarefas').onSnapshot(snap => setPessoalTarefas(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_notas').onSnapshot(snap => setPessoalNotas(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_acessos').onSnapshot(snap => setPessoalAcessos(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_compras').onSnapshot(snap => setPessoalCompras(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_agenda').onSnapshot(snap => setPessoalAgenda(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_contatos').onSnapshot(snap => setPessoalContatos(decryptSnap(snap))),
+                    // Listener especial para segurança e PIX
+                    getIsolatedCollection('config_seguranca').onSnapshot(snap => {
+                        setHasCredentials(!snap.empty);
+                        if (!snap.empty) {
+                            // Tenta buscar a chave pix dentro do documento de segurança
+                            snap.docs.forEach(doc => {
+                                const data = doc.data();
+                                if (data.pix) setUserPixKey(Security.decrypt(data.pix));
+                            });
+                        }
+                    })
+                ];
+
+                return () => unsubscribers.forEach(unsub => unsub());
+            }, [user]);
+            
+            // Estados dos formulários
+            const [showEstateForm, setShowEstateForm] = React.useState(false);
+            const [showRealEstateForm, setShowRealEstateForm] = React.useState(false);
+            const [showTenantForm, setShowTenantForm] = React.useState(false);
+            const [showPropertyForm, setShowPropertyForm] = React.useState(false);
+            const [showFinanceForm, setShowFinanceForm] = React.useState(false);
+            const [showContractForm, setShowContractForm] = React.useState(false);
+            const [showDocumentForm, setShowDocumentForm] = React.useState(false);
+            // Estados dos formulários pessoais
+            const [showPersonalTaskForm, setShowPersonalTaskForm] = React.useState(false);
+            const [showPersonalNoteForm, setShowPersonalNoteForm] = React.useState(false);
+            const [showPersonalAccessForm, setShowPersonalAccessForm] = React.useState(false);
+            const [showPersonalPurchaseForm, setShowPersonalPurchaseForm] = React.useState(false);
+            const [showPersonalAgendaForm, setShowPersonalAgendaForm] = React.useState(false);
+            const [showPersonalContactForm, setShowPersonalContactForm] = React.useState(false);
+
+
+            // Estados para Relatórios
+            const [showReportModal, setShowReportModal] = React.useState(false);
+            
+
+            // Estados de edição
+            const [editingItem, setEditingItem] = React.useState(null);
+
+            // Estado de navegação principal e submenu
+            const [activeTab, setActiveTab] = React.useState('dashboard');
+            const [activeSubTab, setActiveSubTab] = React.useState('');
+
+            // Estado do menu móvel
+            const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
+            const inquilinosList = inquilinos || [];
+
+            // NOVO: Estados para o sistema de login aprimorado
+            const [loginUsername, setLoginUsername] = React.useState('');
+            const [loginPassword, setLoginPassword] = React.useState('');
+            const [newUsername, setNewUsername] = React.useState('');
+            const [newPassword, setNewPassword] = React.useState('');
+            const [newEmail, setNewEmail] = React.useState('');
+            const [recoveryEmail, setRecoveryEmail] = React.useState('');
+
+            // FUNÇÃO DE LOGIN APRIMORADA
+            const handleLogin = async () => {
+                if (!loginUsername || !loginPassword) {
+                    alert('⚠️ Preencha todos os campos!');
+                    return;
+                }
+
+                try {
+                    // Login anônimo no Firebase
+                    const userCredential = await firebase.auth().signInAnonymously();
+                    const tempUser = userCredential.user;
+                    
+                    // Criar a collection isolada temporariamente
+                    const tempCollection = firebase.firestore().collection(`${tempUser.uid}_config_seguranca`);
+                    const snapshot = await tempCollection.get();
+
+                    if (snapshot.empty) {
+                        alert('❌ Credenciais não encontradas. Por favor, crie uma conta primeiro.');
+                        await firebase.auth().signOut();
+                        return;
+                    }
+
+                    // Verificar credenciais
+                    let authenticated = false;
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const decrypted = Security.decrypt(data.credentials || data);
+                        
+                        if (decrypted.username === loginUsername && decrypted.password === loginPassword) {
+                            authenticated = true;
+                        }
+                    });
+
+                    if (authenticated) {
+                        setUser(tempUser);
+                        setIsAuthenticated(true);
+                        setLoginUsername('');
+                        setLoginPassword('');
+                    } else {
+                        alert('❌ Usuário ou senha incorretos!');
+                        await firebase.auth().signOut();
+                    }
+                } catch (error) {
+                    console.error('Erro no login:', error);
+                    alert('❌ Erro ao fazer login. Tente novamente.');
+                }
+            };
+
+            // FUNÇÃO DE CRIAR CONTA
+            const handleCreateAccount = async () => {
+                if (!newUsername || !newPassword || !newEmail) {
+                    alert('⚠️ Preencha todos os campos!');
+                    return;
+                }
+
+                if (newPassword.length < 6) {
+                    alert('⚠️ A senha deve ter no mínimo 6 caracteres!');
+                    return;
+                }
+
+                if (!newEmail.includes('@')) {
+                    alert('⚠️ Digite um email válido!');
+                    return;
+                }
+
+                try {
+                    // Login anônimo para criar a conta
+                    const userCredential = await firebase.auth().signInAnonymously();
+                    const tempUser = userCredential.user;
+
+                    const credentialData = {
+                        credentials: Security.encrypt({
+                            username: newUsername,
+                            password: newPassword,
+                            email: newEmail
+                        }),
+                        createdAt: new Date().toISOString()
+                    };
+
+                    await firebase.firestore()
+                        .collection(`${tempUser.uid}_config_seguranca`)
+                        .doc('status')
+                        .set(credentialData);
+
+                    alert('✅ Conta criada com sucesso! Faça login agora.');
+                    setShowCreateAccount(false);
+                    setShowLoginForm(true);
+                    setNewUsername('');
+                    setNewPassword('');
+                    setNewEmail('');
+                    
+                    // Fazer logout para o usuário fazer login novamente
+                    await firebase.auth().signOut();
+                } catch (error) {
+                    console.error('Erro ao criar conta:', error);
+                    alert('❌ Erro ao criar conta. Tente novamente.');
+                }
+            };
+
+            // FUNÇÃO DE RECUPERAÇÃO DE SENHA
+            const handleForgotPassword = async () => {
+                if (!recoveryEmail) {
+                    alert('⚠️ Digite seu email cadastrado!');
+                    return;
+                }
+
+                try {
+                    // Login anônimo temporário para buscar credenciais
+                    const userCredential = await firebase.auth().signInAnonymously();
+                    const tempUser = userCredential.user;
+                    
+                    const snapshot = await firebase.firestore()
+                        .collection(`${tempUser.uid}_config_seguranca`)
+                        .get();
+
+                    let foundCredentials = null;
+                    
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const decrypted = Security.decrypt(data.credentials || data);
+                        
+                        if (decrypted.email === recoveryEmail) {
+                            foundCredentials = decrypted;
+                        }
+                    });
+
+                    if (foundCredentials) {
+                        alert(`📧 Dados da sua conta:\n\nUsuário: ${foundCredentials.username}\nSenha: ${foundCredentials.password}\n\nAnote essas informações!`);
+                        setShowForgotPassword(false);
+                        setShowLoginForm(true);
+                        setRecoveryEmail('');
+                    } else {
+                        alert('❌ Email não encontrado no sistema!');
+                    }
+                    
+                    await firebase.auth().signOut();
+                } catch (error) {
+                    console.error('Erro na recuperação:', error);
+                    alert('❌ Erro ao recuperar senha. Tente novamente.');
+                }
+            };
+
+            // FUNÇÃO DE RESET COMPLETO (PARA TESTES)
+            const handleResetSystem = async () => {
+                const confirmReset = window.confirm('⚠️ ATENÇÃO: Isso vai APAGAR TODOS OS DADOS do sistema!\n\nTem certeza que deseja continuar?\n\nEsta ação é IRREVERSÍVEL!');
+                
+                if (!confirmReset) return;
+
+                const doubleConfirm = window.prompt('Digite "RESET" (em maiúsculas) para confirmar:');
+                
+                if (doubleConfirm !== 'RESET') {
+                    alert('❌ Reset cancelado!');
+                    return;
+                }
+
+                try {
+                    if (user) {
+                        // Deletar todas as collections do usuário atual
+                        const collections = [
+                            'config_seguranca', 'imoveis', 'imobiliarias', 'inquilinos', 
+                            'propriedades', 'financas', 'contratos', 'documentos',
+                            'pessoal_tarefas', 'pessoal_notas', 'pessoal_acessos',
+                            'pessoal_compras', 'pessoal_agenda', 'pessoal_contatos'
+                        ];
+
+                        for (const collectionName of collections) {
+                            const collection = getIsolatedCollection(collectionName);
+                            const snapshot = await collection.get();
+                            
+                            const batch = firebase.firestore().batch();
+                            snapshot.docs.forEach(doc => {
+                                batch.delete(doc.ref);
+                            });
+                            await batch.commit();
+                        }
+
+                        alert('✅ Sistema resetado com sucesso!\n\nFazendo logout...');
+                        await firebase.auth().signOut();
+                        setUser(null);
+                        setIsAuthenticated(false);
+                        setHasCredentials(false);
+                    }
+                } catch (error) {
+                    console.error('Erro ao resetar sistema:', error);
+                    alert('❌ Erro ao resetar sistema. Tente novamente.');
+                }
+            };
+
+            // TELA DE LOGIN/CADASTRO APRIMORADA
+            if (!isAuthenticated) {
+                return React.createElement('div', {
+                    className: 'min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center p-4'
+                },
+                    React.createElement('div', {
+                        className: 'bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md'
+                    },
+                        // Logo/Título
+                        React.createElement('div', { className: 'text-center mb-8' },
+                            React.createElement('h1', { className: 'text-3xl font-black text-gray-800 mb-2' }, '🏢 Gestão Imobiliária PRO'),
+                            React.createElement('p', { className: 'text-gray-600 text-sm' }, 'Sistema completo de administração')
+                        ),
+
+                        // FORMULÁRIO DE LOGIN
+                        showLoginForm && !showCreateAccount && !showForgotPassword && React.createElement('div', {},
+                            React.createElement('h2', { className: 'text-xl font-bold text-gray-800 mb-6' }, '🔐 Acesse sua conta'),
+                            
+                            React.createElement('div', { className: 'space-y-4' },
+                                React.createElement('div', {},
+                                    React.createElement('label', { className: 'block text-xs font-black text-gray-700 uppercase mb-2' }, 'Login / Usuário'),
+                                    React.createElement('input', {
+                                        type: 'text',
+                                        value: loginUsername,
+                                        onChange: (e) => setLoginUsername(e.target.value),
+                                        className: 'w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition',
+                                        placeholder: 'Digite seu usuário',
+                                        onKeyPress: (e) => e.key === 'Enter' && handleLogin()
+                                    })
+                                ),
+                                
+                                React.createElement('div', {},
+                                    React.createElement('label', { className: 'block text-xs font-black text-gray-700 uppercase mb-2' }, 'Sua Senha'),
+                                    React.createElement('input', {
+                                        type: 'password',
+                                        value: loginPassword,
+                                        onChange: (e) => setLoginPassword(e.target.value),
+                                        className: 'w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition',
+                                        placeholder: 'Digite sua senha',
+                                        onKeyPress: (e) => e.key === 'Enter' && handleLogin()
+                                    })
+                                ),
+
+                                React.createElement('button', {
+                                    onClick: handleLogin,
+                                    className: 'w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition transform hover:scale-105'
+                                }, '🚀 ENTRAR'),
+
+                                // Link Esqueci a Senha
+                                React.createElement('button', {
+                                    onClick: () => {
+                                        setShowLoginForm(false);
+                                        setShowForgotPassword(true);
+                                    },
+                                    className: 'w-full text-sm text-blue-600 hover:text-blue-800 font-semibold mt-2'
+                                }, '🔑 Esqueci minha senha'),
+
+                                // Divisor
+                                React.createElement('div', { className: 'relative my-6' },
+                                    React.createElement('div', { className: 'absolute inset-0 flex items-center' },
+                                        React.createElement('div', { className: 'w-full border-t border-gray-300' })
+                                    ),
+                                    React.createElement('div', { className: 'relative flex justify-center text-sm' },
+                                        React.createElement('span', { className: 'px-2 bg-white text-gray-500' }, 'OU')
+                                    )
+                                ),
+
+                                // Botão Criar Conta
+                                React.createElement('button', {
+                                    onClick: () => {
+                                        setShowLoginForm(false);
+                                        setShowCreateAccount(true);
+                                    },
+                                    className: 'w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition transform hover:scale-105'
+                                }, '✨ CRIAR NOVA CONTA')
+                            )
+                        ),
+
+                        // FORMULÁRIO DE CRIAR CONTA
+                        showCreateAccount && !showLoginForm && !showForgotPassword && React.createElement('div', {},
+                            React.createElement('h2', { className: 'text-xl font-bold text-gray-800 mb-6' }, '✨ Criar nova conta'),
+                            
+                            React.createElement('div', { className: 'space-y-4' },
+                                React.createElement('div', {},
+                                    React.createElement('label', { className: 'block text-xs font-black text-gray-700 uppercase mb-2' }, 'Nome de Usuário'),
+                                    React.createElement('input', {
+                                        type: 'text',
+                                        value: newUsername,
+                                        onChange: (e) => setNewUsername(e.target.value),
+                                        className: 'w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none transition',
+                                        placeholder: 'Escolha um usuário'
+                                    })
+                                ),
+                                
+                                React.createElement('div', {},
+                                    React.createElement('label', { className: 'block text-xs font-black text-gray-700 uppercase mb-2' }, 'Email de Recuperação'),
+                                    React.createElement('input', {
+                                        type: 'email',
+                                        value: newEmail,
+                                        onChange: (e) => setNewEmail(e.target.value),
+                                        className: 'w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none transition',
+                                        placeholder: 'seu@email.com'
+                                    })
+                                ),
+                                
+                                React.createElement('div', {},
+                                    React.createElement('label', { className: 'block text-xs font-black text-gray-700 uppercase mb-2' }, 'Senha (mín. 6 caracteres)'),
+                                    React.createElement('input', {
+                                        type: 'password',
+                                        value: newPassword,
+                                        onChange: (e) => setNewPassword(e.target.value),
+                                        className: 'w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none transition',
+                                        placeholder: 'Crie uma senha segura'
+                                    })
+                                ),
+
+                                React.createElement('button', {
+                                    onClick: handleCreateAccount,
+                                    className: 'w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition transform hover:scale-105'
+                                }, '🎉 CRIAR CONTA'),
+
+                                React.createElement('button', {
+                                    onClick: () => {
+                                        setShowCreateAccount(false);
+                                        setShowLoginForm(true);
+                                    },
+                                    className: 'w-full text-sm text-gray-600 hover:text-gray-800 font-semibold mt-2'
+                                }, '← Voltar para o login')
+                            )
+                        ),
+
+                        // FORMULÁRIO DE RECUPERAÇÃO DE SENHA
+                        showForgotPassword && !showLoginForm && !showCreateAccount && React.createElement('div', {},
+                            React.createElement('h2', { className: 'text-xl font-bold text-gray-800 mb-6' }, '🔑 Recuperar senha'),
+                            
+                            React.createElement('div', { className: 'space-y-4' },
+                                React.createElement('p', { className: 'text-sm text-gray-600 mb-4' }, 
+                                    'Digite o email cadastrado para recuperar suas credenciais.'
+                                ),
+                                
+                                React.createElement('div', {},
+                                    React.createElement('label', { className: 'block text-xs font-black text-gray-700 uppercase mb-2' }, 'Email Cadastrado'),
+                                    React.createElement('input', {
+                                        type: 'email',
+                                        value: recoveryEmail,
+                                        onChange: (e) => setRecoveryEmail(e.target.value),
+                                        className: 'w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition',
+                                        placeholder: 'seu@email.com',
+                                        onKeyPress: (e) => e.key === 'Enter' && handleForgotPassword()
+                                    })
+                                ),
+
+                                React.createElement('button', {
+                                    onClick: handleForgotPassword,
+                                    className: 'w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition transform hover:scale-105'
+                                }, '🔓 RECUPERAR CREDENCIAIS'),
+
+                                React.createElement('button', {
+                                    onClick: () => {
+                                        setShowForgotPassword(false);
+                                        setShowLoginForm(true);
+                                    },
+                                    className: 'w-full text-sm text-gray-600 hover:text-gray-800 font-semibold mt-2'
+                                }, '← Voltar para o login')
+                            )
+                        ),
+
+                        // BOTÃO DE RESET (PARA TESTES) - Discreto no rodapé
+                        React.createElement('div', { className: 'mt-8 pt-6 border-t border-gray-200' },
+                            React.createElement('button', {
+                                onClick: handleResetSystem,
+                                className: 'w-full text-xs text-red-400 hover:text-red-600 font-semibold'
+                            }, '⚙️ Reset Sistema (Desenvolvedor)')
+                        ),
+
+                        // Aviso de Segurança
+                        React.createElement('div', { className: 'mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg' },
+                            React.createElement('p', { className: 'text-red-700 text-xs font-semibold' }, 
+                                'Para sua total segurança e privacidade, você irá trabalhar de forma 100% offline. Seus dados são protegidos por criptografia e permanecem apenas no seu dispositivo. Guarde suas credenciais em local seguro!'
+                            )
+                        )
+                    )
+                );
+            }
+
+            // COMPONENTES AUXILIARES
+            const Card = ({ children, className = '' }) => {
+                return React.createElement('div', {
+                    className: `bg-white rounded-lg shadow-md p-6 ${className}`
+                }, children);
+            };
+
+            const Button = ({ onClick, children, variant = 'primary', className = '', disabled = false }) => {
+                const variants = {
+                    primary: 'bg-blue-600 hover:bg-blue-700 text-white',
+                    secondary: 'bg-gray-200 hover:bg-gray-300 text-gray-800',
+                    danger: 'bg-red-600 hover:bg-red-700 text-white',
+                    success: 'bg-green-600 hover:bg-green-700 text-white'
+                };
+                return React.createElement('button', {
+                    onClick,
+                    disabled,
+                    className: `px-4 py-2 rounded font-semibold transition ${variants[variant]} ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`
+                }, children);
+            };
+
+            const FormInput = ({ label, name, type = 'text', required = false, value, onChange, placeholder = '', disabled = false }) => {
+                return React.createElement('div', { className: 'mb-4' },
+                    React.createElement('label', { className: 'block text-sm font-black text-gray-700 mb-2 uppercase' }, label),
+                    React.createElement('input', {
+                        type,
+                        name,
+                        required,
+                        disabled,
+                        value: value,
+                        onChange,
+                        placeholder,
+                        className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                    })
+                );
+            };
+
+            const FormSelect = ({ label, name, options, required = false, value, onChange, disabled = false }) => {
+                return React.createElement('div', { className: 'mb-4' },
+                    React.createElement('label', { className: 'block text-sm font-black text-gray-700 mb-2 uppercase' }, label),
+                    React.createElement('select', {
+                        name,
+                        required,
+                        disabled,
+                        value: value,
+                        onChange,
+                        className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                    }, options.map((opt, i) => React.createElement('option', { key: i, value: opt.value }, opt.label)))
+                );
+            };
+
+            const FormTextarea = ({ label, name, required = false, value, onChange, placeholder = '', rows = 3, disabled = false }) => {
+                return React.createElement('div', { className: 'mb-4' },
+                    React.createElement('label', { className: 'block text-sm font-black text-gray-700 mb-2 uppercase' }, label),
+                    React.createElement('textarea', {
+                        name,
+                        required,
+                        disabled,
+                        value: value,
+                        onChange,
+                        placeholder,
+                        rows,
+                        className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                    })
+                );
+            };
+
+            // FUNÇÕES CRUD GENÉRICAS
+            const handleAdd = async (collectionName, formData) => {
+                try {
+                    const encryptedData = { data: Security.encrypt(formData) };
+                    await getIsolatedCollection(collectionName).add(encryptedData);
+                    alert('✅ Item adicionado com sucesso!');
+                } catch (e) {
+                    console.error("Erro ao adicionar:", e);
+                    alert('❌ Erro ao adicionar item.');
+                }
+            };
+
+            const handleEdit = async (collectionName, id, formData) => {
+                try {
+                    const encryptedData = { data: Security.encrypt(formData) };
+                    await getIsolatedCollection(collectionName).doc(id).update(encryptedData);
+                    alert('✅ Item atualizado com sucesso!');
+                } catch (e) {
+                    console.error("Erro ao editar:", e);
+                    alert('❌ Erro ao editar item.');
+                }
+            };
+
+            const handleDelete = async (collectionName, id) => {
+                if (window.confirm('Tem certeza que deseja excluir este item?')) {
+                    try {
+                        await getIsolatedCollection(collectionName).doc(id).delete();
+                        alert('✅ Item excluído com sucesso!');
+                    } catch (e) {
+                        console.error("Erro ao excluir:", e);
+                        alert('❌ Erro ao excluir item.');
+                    }
+                }
+            };
+
+            // FORMULÁRIO GENÉRICO COM SUPORTE A EDIÇÃO
+            const GenericForm = ({ title, fields, onSubmit, onCancel, editingData = null }) => {
+                const [formData, setFormData] = React.useState(editingData || {});
+
+                const handleChange = (e) => {
+                    setFormData({ ...formData, [e.target.name]: e.target.value });
+                };
+
+                const handleSubmitForm = (e) => {
+                    e.preventDefault();
+                    onSubmit(formData);
+                    setFormData({});
+                };
+
+                return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50', onClick: onCancel },
+                    React.createElement('div', { className: 'bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto', onClick: (e) => e.stopPropagation() },
+                        React.createElement('h2', { className: 'text-2xl font-black mb-6 text-gray-800' }, title),
+                        React.createElement('form', { onSubmit: handleSubmitForm },
+                            fields.map((field, idx) => {
+                                if (field.type === 'select') {
+                                    return React.createElement(FormSelect, {
+                                        key: idx,
+                                        label: field.label,
+                                        name: field.name,
+                                        required: field.required,
+                                        disabled: field.disabled,
+                                        options: field.options,
+                                        value: formData[field.name] || '',
+                                        onChange: handleChange
+                                    });
+                                } else if (field.type === 'textarea') {
+                                    return React.createElement(FormTextarea, {
+                                        key: idx,
+                                        label: field.label,
+                                        name: field.name,
+                                        required: field.required,
+                                        disabled: field.disabled,
+                                        placeholder: field.placeholder,
+                                        value: formData[field.name] || '',
+                                        onChange: handleChange
+                                    });
+                                } else {
+                                    return React.createElement(FormInput, {
+                                        key: idx,
+                                        label: field.label,
+                                        name: field.name,
+                                        type: field.type || 'text',
+                                        required: field.required,
+                                        disabled: field.disabled,
+                                        placeholder: field.placeholder,
+                                        value: formData[field.name] || '',
+                                        onChange: handleChange
+                                    });
+                                }
+                            }),
+                            React.createElement('div', { className: 'flex gap-3 mt-6' },
+                                React.createElement(Button, { type: 'submit', variant: 'success' }, editingData ? '💾 Salvar Alterações' : '➕ Adicionar'),
+                                React.createElement(Button, { type: 'button', variant: 'secondary', onClick: onCancel }, '❌ Cancelar')
+                            )
+                        )
+                    )
+                );
+            };
+
+            // FORMULÁRIOS ESPECÍFICOS
+            const EstateForm = () => {
+                const fields = [
+                    { label: 'Nome do Imóvel', name: 'nome', required: true },
+                    { label: 'Endereço Completo', name: 'endereco', required: true },
+                    { label: 'Tipo', name: 'tipo', type: 'select', required: true, options: [
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Apartamento', label: 'Apartamento' },
+                        { value: 'Casa', label: 'Casa' },
+                        { value: 'Terreno', label: 'Terreno' },
+                        { value: 'Comercial', label: 'Comercial' },
+                        { value: 'Rural', label: 'Rural' }
+                    ]},
+                    { label: 'Área (m²)', name: 'area', type: 'number' },
+                    { label: 'Valor de Compra (R$)', name: 'valorCompra', type: 'number' },
+                    { label: 'Valor Atual (R$)', name: 'valorAtual', type: 'number' },
+                    { label: 'Observações', name: 'observacoes', type: 'textarea' }
+                ];
+
+                return React.createElement(GenericForm, {
+                    title: editingItem ? '✏️ Editar Imóvel' : '🏠 Novo Imóvel',
+                    fields,
+                    editingData: editingItem,
+                    onSubmit: (data) => {
+                        if (editingItem) {
+                            handleEdit('imoveis', editingItem.id, data);
+                            setEditingItem(null);
+                        } else {
+                            handleAdd('imoveis', data);
+                        }
+                        setShowEstateForm(false);
+                    },
+                    onCancel: () => {
+                        setShowEstateForm(false);
+                        setEditingItem(null);
+                    }
+                });
+            };
+
+            const RealEstateForm = () => {
+                const fields = [
+                    { label: 'Nome da Imobiliária', name: 'nome', required: true },
+                    { label: 'CNPJ', name: 'cnpj' },
+                    { label: 'Endereço', name: 'endereco' },
+                    { label: 'Telefone', name: 'telefone' },
+                    { label: 'Email', name: 'email', type: 'email' },
+                    { label: 'Site', name: 'site' },
+                    { label: 'Contato Principal', name: 'contato' },
+                    { label: 'Observações', name: 'observacoes', type: 'textarea' }
+                ];
+
+                return React.createElement(GenericForm, {
+                    title: editingItem ? '✏️ Editar Imobiliária' : '🏢 Nova Imobiliária',
+                    fields,
+                    editingData: editingItem,
+                    onSubmit: (data) => {
+                        if (editingItem) {
+                            handleEdit('imobiliarias', editingItem.id, data);
+                            setEditingItem(null);
+                        } else {
+                            handleAdd('imobiliarias', data);
+                        }
+                        setShowRealEstateForm(false);
+                    },
+                    onCancel: () => {
+                        setShowRealEstateForm(false);
+                        setEditingItem(null);
+                    }
+                });
+            };
+
+            const TenantForm = () => {
+                const fields = [
+                    { label: 'Nome Completo', name: 'nome', required: true },
+                    { label: 'CPF', name: 'cpf' },
+                    { label: 'RG', name: 'rg' },
+                    { label: 'Data de Nascimento', name: 'dataNascimento', type: 'date' },
+                    { label: 'Telefone', name: 'telefone' },
+                    { label: 'Email', name: 'email', type: 'email' },
+                    { label: 'Endereço Atual', name: 'endereco' },
+                    { label: 'Profissão', name: 'profissao' },
+                    { label: 'Renda Mensal (R$)', name: 'renda', type: 'number' },
+                    { label: 'Estado Civil', name: 'estadoCivil', type: 'select', options: [
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Solteiro', label: 'Solteiro(a)' },
+                        { value: 'Casado', label: 'Casado(a)' },
+                        { value: 'Divorciado', label: 'Divorciado(a)' },
+                        { value: 'Viuvo', label: 'Viúvo(a)' }
+                    ]},
+                    { label: 'Observações', name: 'observacoes', type: 'textarea' }
+                ];
+
+                return React.createElement(GenericForm, {
+                    title: editingItem ? '✏️ Editar Inquilino' : '👤 Novo Inquilino',
+                    fields,
+                    editingData: editingItem,
+                    onSubmit: (data) => {
+                        if (editingItem) {
+                            handleEdit('inquilinos', editingItem.id, data);
+                            setEditingItem(null);
+                        } else {
+                            handleAdd('inquilinos', data);
+                        }
+                        setShowTenantForm(false);
+                    },
+                    onCancel: () => {
+                        setShowTenantForm(false);
+                        setEditingItem(null);
+                    }
+                });
+            };
+
+            const PropertyForm = () => {
+                const imoveisOptions = [{ value: '', label: 'Selecione...' }, ...imoveis.map(i => ({ value: i.id, label: i.nome }))];
+                const inquilinosOptions = [{ value: '', label: 'Selecione...' }, ...inquilinos.map(i => ({ value: i.id, label: i.nome }))];
+
+                const fields = [
+                    { label: 'Imóvel', name: 'imovelId', type: 'select', required: true, options: imoveisOptions },
+                    { label: 'Inquilino', name: 'inquilinoId', type: 'select', options: inquilinosOptions },
+                    { label: 'Valor do Aluguel (R$)', name: 'valorAluguel', type: 'number', required: true },
+                    { label: 'Dia de Vencimento', name: 'diaVencimento', type: 'number', placeholder: '1-31' },
+                    { label: 'Data de Início', name: 'dataInicio', type: 'date' },
+                    { label: 'Data de Fim', name: 'dataFim', type: 'date' },
+                    { label: 'Status', name: 'status', type: 'select', options: [
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Ocupado', label: 'Ocupado' },
+                        { value: 'Vago', label: 'Vago' },
+                        { value: 'Manutenção', label: 'Manutenção' }
+                    ]},
+                    { label: 'Observações', name: 'observacoes', type: 'textarea' }
+                ];
+
+                return React.createElement(GenericForm, {
+                    title: editingItem ? '✏️ Editar Propriedade' : '🔑 Nova Propriedade',
+                    fields,
+                    editingData: editingItem,
+                    onSubmit: (data) => {
+                        if (editingItem) {
+                            handleEdit('propriedades', editingItem.id, data);
+                            setEditingItem(null);
+                        } else {
+                            handleAdd('propriedades', data);
+                        }
+                        setShowPropertyForm(false);
+                    },
+                    onCancel: () => {
+                        setShowPropertyForm(false);
+                        setEditingItem(null);
+                    }
+                });
+            };
+
+            const FinanceForm = () => {
+                const propriedadesOptions = [{ value: '', label: 'Selecione...' }, ...propriedades.map(p => {
+                    const imovel = imoveis.find(i => i.id === p.imovelId);
+                    return { value: p.id, label: imovel ? imovel.nome : 'Imóvel Desconhecido' };
+                })];
+
+                const fields = [
+                    { label: 'Propriedade', name: 'propriedadeId', type: 'select', options: propriedadesOptions },
+                    { label: 'Tipo', name: 'tipo', type: 'select', required: true, options: [
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Receita', label: 'Receita' },
+                        { value: 'Despesa', label: 'Despesa' }
+                    ]},
+                    { label: 'Categoria', name: 'categoria', type: 'select', required: true, options: [
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Aluguel', label: 'Aluguel' },
+                        { value: 'Condomínio', label: 'Condomínio' },
+                        { value: 'IPTU', label: 'IPTU' },
+                        { value: 'Água', label: 'Água' },
+                        { value: 'Luz', label: 'Luz' },
+                        { value: 'Gás', label: 'Gás' },
+                        { value: 'Internet', label: 'Internet' },
+                        { value: 'Manutenção', label: 'Manutenção' },
+                        { value: 'Reforma', label: 'Reforma' },
+                        { value: 'Seguro', label: 'Seguro' },
+                        { value: 'Outros', label: 'Outros' }
+                    ]},
+                    { label: 'Descrição', name: 'descricao', required: true },
+                    { label: 'Valor (R$)', name: 'valor', type: 'number', required: true },
+                    { label: 'Data', name: 'data', type: 'date', required: true },
+                    { label: 'Status', name: 'status', type: 'select', options: [
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Pendente', label: 'Pendente' },
+                        { value: 'Pago', label: 'Pago' },
+                        { value: 'Atrasado', label: 'Atrasado' }
+                    ]},
+                    { label: 'Observações', name: 'observacoes', type: 'textarea' }
+                ];
+
+                return React.createElement(GenericForm, {
+                    title: editingItem ? '✏️ Editar Transação' : '💰 Nova Transação',
+                    fields,
+                    editingData: editingItem,
+                    onSubmit: (data) => {
+                        if (editingItem) {
+                            handleEdit('financas', editingItem.id, data);
+                            setEditingItem(null);
+                        } else {
+                            handleAdd('financas', data);
+                        }
+                        setShowFinanceForm(false);
+                    },
+                    onCancel: () => {
+                        setShowFinanceForm(false);
+                        setEditingItem(null);
+                    }
+                });
+            };
+
+            const ContractForm = () => {
+                const imoveisOptions = [{ value: '', label: 'Selecione...' }, ...imoveis.map(i => ({ value: i.id, label: i.nome }))];
+                const inquilinosOptions = [{ value: '', label: 'Selecione...' }, ...inquilinos.map(i => ({ value: i.id, label: i.nome }))];
+
+                const fields = [
+                    { label: 'Imóvel', name: 'imovelId', type: 'select', required: true, options: imoveisOptions },
+                    { label: 'Inquilino', name: 'inquilinoId', type: 'select', required: true, options: inquilinosOptions },
+                    { label: 'Número do Contrato', name: 'numeroContrato', required: true },
+                    { label: 'Data de Início', name: 'dataInicio', type: 'date', required: true },
+                    { label: 'Data de Término', name: 'dataTermino', type: 'date', required: true },
+                    { label: 'Valor do Aluguel (R$)', name: 'valorAluguel', type: 'number', required: true },
+                    { label: 'Dia de Vencimento', name: 'diaVencimento', type: 'number', placeholder: '1-31' },
+                    { label: 'Tipo de Reajuste', name: 'tipoReajuste', type: 'select', options: [
+                        { value: '', label: 'Selecione...' },
+                        { value: 'IGPM', label: 'IGP-M' },
+                        { value: 'IPCA', label: 'IPCA' },
+                        { value: 'Fixo', label: 'Valor Fixo' },
+                        { value: 'Negociado', label: 'Negociado' }
+                    ]},
+                    { label: 'Observações', name: 'observacoes', type: 'textarea' }
+                ];
+
+                return React.createElement(GenericForm, {
+                    title: editingItem ? '✏️ Editar Contrato' : '📄 Novo Contrato',
+                    fields,
+                    editingData: editingItem,
+                    onSubmit: (data) => {
+                        if (editingItem) {
+                            handleEdit('contratos', editingItem.id, data);
+                            setEditingItem(null);
+                        } else {
+                            handleAdd('contratos', data);
+                        }
+                        setShowContractForm(false);
+                    },
+                    onCancel: () => {
+                        setShowContractForm(false);
+                        setEditingItem(null);
+                    }
+                });
+            };
+
+            const DocumentForm = () => {
+                const imoveisOptions = [{ value: '', label: 'Selecione...' }, ...imoveis.map(i => ({ value: i.id, label: i.nome }))];
+
+                const fields = [
+                    { label: 'Nome do Documento', name: 'nome', required: true },
+                    { label: 'Tipo', name: 'tipo', type: 'select', required: true, options: [
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Escritura', label: 'Escritura' },
+                        { value: 'Contrato', label: 'Contrato' },
+                        { value: 'IPTU', label: 'IPTU' },
+                        { value: 'Certidão', label: 'Certidão' },
+                        { value: 'Matrícula', label: 'Matrícula' },
+                        { value: 'Alvará', label: 'Alvará' },
+                        { value: 'Laudo', label: 'Laudo' },
+                        { value: 'Outros', label: 'Outros' }
+                    ]},
+                    { label: 'Imóvel Relacionado', name: 'imovelId', type: 'select', options: imoveisOptions },
+                    { label: 'Data de Emissão', name: 'dataEmissao', type: 'date' },
+                    { label: 'Data de Validade', name: 'dataValidade', type: 'date' },
+                    { label: 'URL/Link do Arquivo', name: 'url', placeholder: 'https://...' },
+                    { label: 'Observações', name: 'observacoes', type: 'textarea' }
+                ];
+
+                return React.createElement(GenericForm, {
+                    title: editingItem ? '✏️ Editar Documento' : '📎 Novo Documento',
+                    fields,
+                    editingData: editingItem,
+                    onSubmit: (data) => {
+                        if (editingItem) {
+                            handleEdit('documentos', editingItem.id, data);
+                            setEditingItem(null);
+                        } else {
+                            handleAdd('documentos', data);
+                        }
+                        setShowDocumentForm(false);
+                    },
+                    onCancel: () => {
+                        setShowDocumentForm(false);
+                        setEditingItem(null);
+                    }
+                });
+            };
+
+            // FORMULÁRIOS PESSOAIS
+            const PersonalTaskForm = () => {
+                const fields = [
+                    { label: 'Título da Tarefa', name: 'titulo', required: true },
+                    { label: 'Descrição', name: 'descricao', type: 'textarea' },
+                    { label: 'Prioridade', name: 'prioridade', type: 'select', options: [
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Baixa', label: 'Baixa' },
+                        { value: 'Média', label: 'Média' },
+                        { value: 'Alta', label: 'Alta' }
+                    ]},
+                    { label: 'Data de Vencimento', name: 'dataVencimento', type: 'date' },
+                    { label: 'Status', name: 'status', type: 'select', options: [
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Pendente', label: 'Pendente' },
+                        { value: 'Em Andamento', label: 'Em Andamento' },
+                        { value: 'Concluída', label: 'Concluída' }
+                    ]}
+                ];
+
+                return React.createElement(GenericForm, {
+                    title: editingItem ? '✏️ Editar Tarefa' : '✅ Nova Tarefa',
+                    fields,
+                    editingData: editingItem,
+                    onSubmit: (data) => {
+                        if (editingItem) {
+                            handleEdit('pessoal_tarefas', editingItem.id, data);
+                            setEditingItem(null);
+                        } else {
+                            handleAdd('pessoal_tarefas', data);
+                        }
+                        setShowPersonalTaskForm(false);
+                    },
+                    onCancel: () => {
+                        setShowPersonalTaskForm(false);
+                        setEditingItem(null);
+                    }
+                });
+            };
+
+            const PersonalNoteForm = () => {
+                const fields = [
+                    { label: 'Título da Nota', name: 'titulo', required: true },
+                    { label: 'Conteúdo', name: 'conteudo', type: 'textarea', required: true },
+                    { label: 'Categoria', name: 'categoria', type: 'select', options: [
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Pessoal', label: 'Pessoal' },
+                        { value: 'Trabalho', label: 'Trabalho' },
+                        { value: 'Ideias', label: 'Ideias' },
+                        { value: 'Outros', label: 'Outros' }
+                    ]}
+                ];
+
+                return React.createElement(GenericForm, {
+                    title: editingItem ? '✏️ Editar Nota' : '📝 Nova Nota',
+                    fields,
+                    editingData: editingItem,
+                    onSubmit: (data) => {
+                        if (editingItem) {
+                            handleEdit('pessoal_notas', editingItem.id, data);
+                            setEditingItem(null);
+                        } else {
+                            handleAdd('pessoal_notas', data);
+                        }
+                        setShowPersonalNoteForm(false);
+                    },
+                    onCancel: () => {
+                        setShowPersonalNoteForm(false);
+                        setEditingItem(null);
+                    }
+                });
+            };
+
+            const PersonalAccessForm = () => {
+                const fields = [
+                    { label: 'Serviço/Site', name: 'servico', required: true },
+                    { label: 'URL', name: 'url', placeholder: 'https://...' },
+                    { label: 'Usuário/Email', name: 'usuario' },
+                    { label: 'Senha/Chave', name: 'senha' },
+                    { label: 'Observações', name: 'observacoes', type: 'textarea' }
+                ];
+
+                return React.createElement(GenericForm, {
+                    title: editingItem ? '✏️ Editar Acesso' : '🔐 Novo Acesso',
+                    fields,
+                    editingData: editingItem,
+                    onSubmit: (data) => {
+                        if (editingItem) {
+                            handleEdit('pessoal_acessos', editingItem.id, data);
+                            setEditingItem(null);
+                        } else {
+                            handleAdd('pessoal_acessos', data);
+                        }
+                        setShowPersonalAccessForm(false);
+                    },
+                    onCancel: () => {
+                        setShowPersonalAccessForm(false);
+                        setEditingItem(null);
+                    }
+                });
+            };
+
+            const PersonalPurchaseForm = () => {
+                const fields = [
+                    { label: 'Nome do Item', name: 'item', required: true },
+                    { label: 'Quantidade', name: 'quantidade', type: 'number' },
+                    { label: 'Valor Unitário (R$)', name: 'valorUnitario', type: 'number' },
+                    { label: 'Valor Total (R$)', name: 'valorTotal', type: 'number' },
+                    { label: 'Local de Compra', name: 'local' },
+                    { label: 'Data da Compra', name: 'dataCompra', type: 'date' },
+                    { label: 'Categoria', name: 'categoria', type: 'select', options: [
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Alimentação', label: 'Alimentação' },
+                        { value: 'Vestuário', label: 'Vestuário' },
+                        { value: 'Eletrônicos', label: 'Eletrônicos' },
+                        { value: 'Casa', label: 'Casa' },
+                        { value: 'Saúde', label: 'Saúde' },
+                        { value: 'Outros', label: 'Outros' }
+                    ]},
+                    { label: 'Observações', name: 'observacoes', type: 'textarea' }
+                ];
+
+                return React.createElement(GenericForm, {
+                    title: editingItem ? '✏️ Editar Compra' : '🛒 Nova Compra',
+                    fields,
+                    editingData: editingItem,
+                    onSubmit: (data) => {
+                        if (editingItem) {
+                            handleEdit('pessoal_compras', editingItem.id, data);
+                            setEditingItem(null);
+                        } else {
+                            handleAdd('pessoal_compras', data);
+                        }
+                        setShowPersonalPurchaseForm(false);
+                    },
+                    onCancel: () => {
+                        setShowPersonalPurchaseForm(false);
+                        setEditingItem(null);
+                    }
+                });
+            };
+
+            const PersonalAgendaForm = () => {
+                const fields = [
+                    { label: 'Título do Evento', name: 'titulo', required: true },
+                    { label: 'Descrição', name: 'descricao', type: 'textarea' },
+                    { label: 'Data', name: 'data', type: 'date', required: true },
+                    { label: 'Hora de Início', name: 'horaInicio', type: 'time' },
+                    { label: 'Hora de Término', name: 'horaTermino', type: 'time' },
+                    { label: 'Local', name: 'local' },
+                    { label: 'Tipo', name: 'tipo', type: 'select', options: [
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Reunião', label: 'Reunião' },
+                        { value: 'Evento', label: 'Evento' },
+                        { value: 'Compromisso', label: 'Compromisso' },
+                        { value: 'Aniversário', label: 'Aniversário' },
+                        { value: 'Outros', label: 'Outros' }
+                    ]}
+                ];
+
+                return React.createElement(GenericForm, {
+                    title: editingItem ? '✏️ Editar Evento' : '📅 Novo Evento',
+                    fields,
+                    editingData: editingItem,
+                    onSubmit: (data) => {
+                        if (editingItem) {
+                            handleEdit('pessoal_agenda', editingItem.id, data);
+                            setEditingItem(null);
+                        } else {
+                            handleAdd('pessoal_agenda', data);
+                        }
+                        setShowPersonalAgendaForm(false);
+                    },
+                    onCancel: () => {
+                        setShowPersonalAgendaForm(false);
+                        setEditingItem(null);
+                    }
+                });
+            };
+
+            const PersonalContactForm = () => {
+                const fields = [
+                    { label: 'Nome Completo', name: 'nome', required: true },
+                    { label: 'Telefone', name: 'telefone' },
+                    { label: 'Email', name: 'email', type: 'email' },
+                    { label: 'Endereço', name: 'endereco' },
+                    { label: 'Empresa', name: 'empresa' },
+                    { label: 'Cargo', name: 'cargo' },
+                    { label: 'Categoria', name: 'categoria', type: 'select', options: [
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Família', label: 'Família' },
+                        { value: 'Amigos', label: 'Amigos' },
+                        { value: 'Trabalho', label: 'Trabalho' },
+                        { value: 'Fornecedor', label: 'Fornecedor' },
+                        { value: 'Outros', label: 'Outros' }
+                    ]},
+                    { label: 'Observações', name: 'observacoes', type: 'textarea' }
+                ];
+
+                return React.createElement(GenericForm, {
+                    title: editingItem ? '✏️ Editar Contato' : '👥 Novo Contato',
+                    fields,
+                    editingData: editingItem,
+                    onSubmit: (data) => {
+                        if (editingItem) {
+                            handleEdit('pessoal_contatos', editingItem.id, data);
+                            setEditingItem(null);
+                        } else {
+                            handleAdd('pessoal_contatos', data);
+                        }
+                        setShowPersonalContactForm(false);
+                    },
+                    onCancel: () => {
+                        setShowPersonalContactForm(false);
+                        setEditingItem(null);
+                    }
+                });
+            };
+
+            // FUNÇÃO PARA RENDERIZAR LISTAS
+            const DataList = ({ title, data, onAdd, onEdit, onDelete, renderItem, emptyMessage }) => {
+                return React.createElement('div', {},
+                    React.createElement('div', { className: 'flex justify-between items-center mb-6' },
+                        React.createElement('h2', { className: 'text-2xl font-black text-gray-800' }, title),
+                        React.createElement(Button, { onClick: onAdd, variant: 'primary' }, '➕ Adicionar')
+                    ),
+                    data.length === 0 ? 
+                        React.createElement('p', { className: 'text-gray-500 text-center py-8' }, emptyMessage || 'Nenhum item cadastrado.') :
+                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' },
+                            data.map((item, idx) => renderItem(item, idx, onEdit, onDelete))
+                        )
+                );
+            };
+
+            // COMPONENTS DE CARD PARA CADA ENTIDADE
+            const EstateCard = (item, idx, onEdit, onDelete) => {
+                return React.createElement(Card, { key: idx, className: 'hover:shadow-lg transition' },
+                    React.createElement('div', { className: 'flex justify-between items-start mb-3' },
+                        React.createElement('h3', { className: 'text-lg font-bold text-gray-800' }, item.nome),
+                        React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded' }, item.tipo)
+                    ),
+                    React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📍 ${item.endereco || 'N/A'}`),
+                    item.area && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📐 Área: ${item.area}m²`),
+                    item.valorAtual && React.createElement('p', { className: 'text-sm font-bold text-green-600 mb-3' }, `💰 R$ ${parseFloat(item.valorAtual).toLocaleString('pt-BR')}`),
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement(Button, { onClick: () => onEdit(item), variant: 'secondary', className: 'text-xs' }, '✏️ Editar'),
+                        React.createElement(Button, { onClick: () => onDelete('imoveis', item.id), variant: 'danger', className: 'text-xs' }, '🗑️ Excluir')
+                    )
+                );
+            };
+
+            const RealEstateCard = (item, idx, onEdit, onDelete) => {
+                return React.createElement(Card, { key: idx, className: 'hover:shadow-lg transition' },
+                    React.createElement('h3', { className: 'text-lg font-bold text-gray-800 mb-3' }, item.nome),
+                    item.cnpj && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `🏢 CNPJ: ${item.cnpj}`),
+                    item.telefone && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📞 ${item.telefone}`),
+                    item.email && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📧 ${item.email}`),
+                    item.contato && React.createElement('p', { className: 'text-sm text-gray-600 mb-3' }, `👤 Contato: ${item.contato}`),
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement(Button, { onClick: () => onEdit(item), variant: 'secondary', className: 'text-xs' }, '✏️ Editar'),
+                        React.createElement(Button, { onClick: () => onDelete('imobiliarias', item.id), variant: 'danger', className: 'text-xs' }, '🗑️ Excluir')
+                    )
+                );
+            };
+
+            const TenantCard = (item, idx, onEdit, onDelete) => {
+                return React.createElement(Card, { key: idx, className: 'hover:shadow-lg transition' },
+                    React.createElement('h3', { className: 'text-lg font-bold text-gray-800 mb-3' }, item.nome),
+                    item.cpf && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📄 CPF: ${item.cpf}`),
+                    item.telefone && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📞 ${item.telefone}`),
+                    item.email && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📧 ${item.email}`),
+                    item.profissao && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `💼 ${item.profissao}`),
+                    item.renda && React.createElement('p', { className: 'text-sm font-bold text-green-600 mb-3' }, `💵 R$ ${parseFloat(item.renda).toLocaleString('pt-BR')}/mês`),
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement(Button, { onClick: () => onEdit(item), variant: 'secondary', className: 'text-xs' }, '✏️ Editar'),
+                        React.createElement(Button, { onClick: () => onDelete('inquilinos', item.id), variant: 'danger', className: 'text-xs' }, '🗑️ Excluir')
+                    )
+                );
+            };
+
+            const PropertyCard = (item, idx, onEdit, onDelete) => {
+                const imovel = imoveis.find(i => i.id === item.imovelId);
+                const inquilino = inquilinos.find(i => i.id === item.inquilinoId);
+                
+                return React.createElement(Card, { key: idx, className: 'hover:shadow-lg transition' },
+                    React.createElement('div', { className: 'flex justify-between items-start mb-3' },
+                        React.createElement('h3', { className: 'text-lg font-bold text-gray-800' }, imovel ? imovel.nome : 'Imóvel Desconhecido'),
+                        React.createElement('span', { 
+                            className: `text-xs px-2 py-1 rounded ${
+                                item.status === 'Ocupado' ? 'bg-green-100 text-green-800' :
+                                item.status === 'Vago' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'
+                            }`
+                        }, item.status || 'N/A')
+                    ),
+                    inquilino && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `👤 ${inquilino.nome}`),
+                    React.createElement('p', { className: 'text-sm font-bold text-green-600 mb-2' }, `💰 R$ ${parseFloat(item.valorAluguel || 0).toLocaleString('pt-BR')}/mês`),
+                    item.diaVencimento && React.createElement('p', { className: 'text-sm text-gray-600 mb-3' }, `📅 Vencimento: Dia ${item.diaVencimento}`),
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement(Button, { onClick: () => onEdit(item), variant: 'secondary', className: 'text-xs' }, '✏️ Editar'),
+                        React.createElement(Button, { onClick: () => onDelete('propriedades', item.id), variant: 'danger', className: 'text-xs' }, '🗑️ Excluir')
+                    )
+                );
+            };
+
+            const FinanceCard = (item, idx, onEdit, onDelete) => {
+                const propriedade = propriedades.find(p => p.id === item.propriedadeId);
+                const imovel = propriedade ? imoveis.find(i => i.id === propriedade.imovelId) : null;
+                
+                return React.createElement(Card, { key: idx, className: 'hover:shadow-lg transition' },
+                    React.createElement('div', { className: 'flex justify-between items-start mb-3' },
+                        React.createElement('h3', { className: 'text-lg font-bold text-gray-800' }, item.descricao),
+                        React.createElement('span', { 
+                            className: `text-xs px-2 py-1 rounded ${
+                                item.tipo === 'Receita' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`
+                        }, item.tipo)
+                    ),
+                    imovel && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `🏠 ${imovel.nome}`),
+                    React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📁 ${item.categoria}`),
+                    React.createElement('p', { className: `text-lg font-bold mb-2 ${item.tipo === 'Receita' ? 'text-green-600' : 'text-red-600'}` }, 
+                        `${item.tipo === 'Receita' ? '+' : '-'} R$ ${parseFloat(item.valor || 0).toLocaleString('pt-BR')}`
+                    ),
+                    item.data && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📅 ${item.data}`),
+                    React.createElement('span', { 
+                        className: `inline-block text-xs px-2 py-1 rounded mb-3 ${
+                            item.status === 'Pago' ? 'bg-green-100 text-green-800' :
+                            item.status === 'Atrasado' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                        }`
+                    }, item.status || 'Pendente'),
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement(Button, { onClick: () => onEdit(item), variant: 'secondary', className: 'text-xs' }, '✏️ Editar'),
+                        React.createElement(Button, { onClick: () => onDelete('financas', item.id), variant: 'danger', className: 'text-xs' }, '🗑️ Excluir')
+                    )
+                );
+            };
+
+            const ContractCard = (item, idx, onEdit, onDelete) => {
+                const imovel = imoveis.find(i => i.id === item.imovelId);
+                const inquilino = inquilinos.find(i => i.id === item.inquilinoId);
+                
+                return React.createElement(Card, { key: idx, className: 'hover:shadow-lg transition' },
+                    React.createElement('h3', { className: 'text-lg font-bold text-gray-800 mb-3' }, `Contrato ${item.numeroContrato}`),
+                    imovel && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `🏠 ${imovel.nome}`),
+                    inquilino && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `👤 ${inquilino.nome}`),
+                    React.createElement('p', { className: 'text-sm font-bold text-green-600 mb-2' }, `💰 R$ ${parseFloat(item.valorAluguel || 0).toLocaleString('pt-BR')}/mês`),
+                    React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📅 ${item.dataInicio} até ${item.dataTermino}`),
+                    item.tipoReajuste && React.createElement('p', { className: 'text-sm text-gray-600 mb-3' }, `📊 Reajuste: ${item.tipoReajuste}`),
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement(Button, { onClick: () => onEdit(item), variant: 'secondary', className: 'text-xs' }, '✏️ Editar'),
+                        React.createElement(Button, { onClick: () => onDelete('contratos', item.id), variant: 'danger', className: 'text-xs' }, '🗑️ Excluir')
+                    )
+                );
+            };
+
+            const DocumentCard = (item, idx, onEdit, onDelete) => {
+                const imovel = imoveis.find(i => i.id === item.imovelId);
+                
+                return React.createElement(Card, { key: idx, className: 'hover:shadow-lg transition' },
+                    React.createElement('div', { className: 'flex justify-between items-start mb-3' },
+                        React.createElement('h3', { className: 'text-lg font-bold text-gray-800' }, item.nome),
+                        React.createElement('span', { className: 'text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded' }, item.tipo)
+                    ),
+                    imovel && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `🏠 ${imovel.nome}`),
+                    item.dataEmissao && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📅 Emissão: ${item.dataEmissao}`),
+                    item.dataValidade && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `⏰ Validade: ${item.dataValidade}`),
+                    item.url && React.createElement('a', { 
+                        href: item.url, 
+                        target: '_blank', 
+                        rel: 'noopener noreferrer',
+                        className: 'text-sm text-blue-600 hover:underline block mb-3'
+                    }, '🔗 Abrir documento'),
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement(Button, { onClick: () => onEdit(item), variant: 'secondary', className: 'text-xs' }, '✏️ Editar'),
+                        React.createElement(Button, { onClick: () => onDelete('documentos', item.id), variant: 'danger', className: 'text-xs' }, '🗑️ Excluir')
+                    )
+                );
+            };
+
+            // CARDS PESSOAIS
+            const PersonalTaskCard = (item, idx, onEdit, onDelete) => {
+                return React.createElement(Card, { key: idx, className: 'hover:shadow-lg transition' },
+                    React.createElement('div', { className: 'flex justify-between items-start mb-3' },
+                        React.createElement('h3', { className: 'text-lg font-bold text-gray-800' }, item.titulo),
+                        React.createElement('span', { 
+                            className: `text-xs px-2 py-1 rounded ${
+                                item.prioridade === 'Alta' ? 'bg-red-100 text-red-800' :
+                                item.prioridade === 'Média' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-green-100 text-green-800'
+                            }`
+                        }, item.prioridade || 'N/A')
+                    ),
+                    item.descricao && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, item.descricao),
+                    item.dataVencimento && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📅 Vencimento: ${item.dataVencimento}`),
+                    React.createElement('span', { 
+                        className: `inline-block text-xs px-2 py-1 rounded mb-3 ${
+                            item.status === 'Concluída' ? 'bg-green-100 text-green-800' :
+                            item.status === 'Em Andamento' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                        }`
+                    }, item.status || 'Pendente'),
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement(Button, { onClick: () => onEdit(item), variant: 'secondary', className: 'text-xs' }, '✏️ Editar'),
+                        React.createElement(Button, { onClick: () => onDelete('pessoal_tarefas', item.id), variant: 'danger', className: 'text-xs' }, '🗑️ Excluir')
+                    )
+                );
+            };
+
+            const PersonalNoteCard = (item, idx, onEdit, onDelete) => {
+                return React.createElement(Card, { key: idx, className: 'hover:shadow-lg transition' },
+                    React.createElement('div', { className: 'flex justify-between items-start mb-3' },
+                        React.createElement('h3', { className: 'text-lg font-bold text-gray-800' }, item.titulo),
+                        item.categoria && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded' }, item.categoria)
+                    ),
+                    React.createElement('p', { className: 'text-sm text-gray-600 mb-3 line-clamp-3' }, item.conteudo),
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement(Button, { onClick: () => onEdit(item), variant: 'secondary', className: 'text-xs' }, '✏️ Editar'),
+                        React.createElement(Button, { onClick: () => onDelete('pessoal_notas', item.id), variant: 'danger', className: 'text-xs' }, '🗑️ Excluir')
+                    )
+                );
+            };
+
+            const PersonalAccessCard = (item, idx, onEdit, onDelete) => {
+                const [showPassword, setShowPassword] = React.useState(false);
+                
+                return React.createElement(Card, { key: idx, className: 'hover:shadow-lg transition' },
+                    React.createElement('h3', { className: 'text-lg font-bold text-gray-800 mb-3' }, item.servico),
+                    item.url && React.createElement('a', { 
+                        href: item.url, 
+                        target: '_blank', 
+                        rel: 'noopener noreferrer',
+                        className: 'text-sm text-blue-600 hover:underline block mb-2'
+                    }, '🔗 Acessar site'),
+                    item.usuario && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `👤 Usuário: ${item.usuario}`),
+                    item.senha && React.createElement('div', { className: 'flex items-center gap-2 mb-3' },
+                        React.createElement('p', { className: 'text-sm text-gray-600' }, 
+                            `🔑 Senha: ${showPassword ? item.senha : '••••••••'}`
+                        ),
+                        React.createElement('button', {
+                            onClick: () => setShowPassword(!showPassword),
+                            className: 'text-xs text-blue-600 hover:text-blue-800'
+                        }, showPassword ? '👁️' : '👁️‍🗨️')
+                    ),
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement(Button, { onClick: () => onEdit(item), variant: 'secondary', className: 'text-xs' }, '✏️ Editar'),
+                        React.createElement(Button, { onClick: () => onDelete('pessoal_acessos', item.id), variant: 'danger', className: 'text-xs' }, '🗑️ Excluir')
+                    )
+                );
+            };
+
+            const PersonalPurchaseCard = (item, idx, onEdit, onDelete) => {
+                return React.createElement(Card, { key: idx, className: 'hover:shadow-lg transition' },
+                    React.createElement('div', { className: 'flex justify-between items-start mb-3' },
+                        React.createElement('h3', { className: 'text-lg font-bold text-gray-800' }, item.item),
+                        item.categoria && React.createElement('span', { className: 'text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded' }, item.categoria)
+                    ),
+                    item.local && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `🏪 ${item.local}`),
+                    item.quantidade && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📦 Quantidade: ${item.quantidade}`),
+                    item.valorTotal && React.createElement('p', { className: 'text-sm font-bold text-green-600 mb-2' }, `💰 R$ ${parseFloat(item.valorTotal).toLocaleString('pt-BR')}`),
+                    item.dataCompra && React.createElement('p', { className: 'text-sm text-gray-600 mb-3' }, `📅 ${item.dataCompra}`),
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement(Button, { onClick: () => onEdit(item), variant: 'secondary', className: 'text-xs' }, '✏️ Editar'),
+                        React.createElement(Button, { onClick: () => onDelete('pessoal_compras', item.id), variant: 'danger', className: 'text-xs' }, '🗑️ Excluir')
+                    )
+                );
+            };
+
+            const PersonalAgendaCard = (item, idx, onEdit, onDelete) => {
+                return React.createElement(Card, { key: idx, className: 'hover:shadow-lg transition' },
+                    React.createElement('div', { className: 'flex justify-between items-start mb-3' },
+                        React.createElement('h3', { className: 'text-lg font-bold text-gray-800' }, item.titulo),
+                        item.tipo && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded' }, item.tipo)
+                    ),
+                    item.descricao && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, item.descricao),
+                    item.data && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📅 ${item.data}`),
+                    item.horaInicio && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `⏰ ${item.horaInicio} ${item.horaTermino ? `- ${item.horaTermino}` : ''}`),
+                    item.local && React.createElement('p', { className: 'text-sm text-gray-600 mb-3' }, `📍 ${item.local}`),
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement(Button, { onClick: () => onEdit(item), variant: 'secondary', className: 'text-xs' }, '✏️ Editar'),
+                        React.createElement(Button, { onClick: () => onDelete('pessoal_agenda', item.id), variant: 'danger', className: 'text-xs' }, '🗑️ Excluir')
+                    )
+                );
+            };
+
+            const PersonalContactCard = (item, idx, onEdit, onDelete) => {
+                return React.createElement(Card, { key: idx, className: 'hover:shadow-lg transition' },
+                    React.createElement('div', { className: 'flex justify-between items-start mb-3' },
+                        React.createElement('h3', { className: 'text-lg font-bold text-gray-800' }, item.nome),
+                        item.categoria && React.createElement('span', { className: 'text-xs bg-green-100 text-green-800 px-2 py-1 rounded' }, item.categoria)
+                    ),
+                    item.telefone && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📞 ${item.telefone}`),
+                    item.email && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `📧 ${item.email}`),
+                    item.empresa && React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, `🏢 ${item.empresa}`),
+                    item.cargo && React.createElement('p', { className: 'text-sm text-gray-600 mb-3' }, `💼 ${item.cargo}`),
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement(Button, { onClick: () => onEdit(item), variant: 'secondary', className: 'text-xs' }, '✏️ Editar'),
+                        React.createElement(Button, { onClick: () => onDelete('pessoal_contatos', item.id), variant: 'danger', className: 'text-xs' }, '🗑️ Excluir')
+                    )
+                );
+            };
+
+            // DASHBOARD COM ESTATÍSTICAS
+            const DashboardView = () => {
+                const totalImoveis = imoveis.length;
+                const propriedadesOcupadas = propriedades.filter(p => p.status === 'Ocupado').length;
+                const propriedadesVagas = propriedades.filter(p => p.status === 'Vago').length;
+                const receitaMensal = financas
+                    .filter(f => f.tipo === 'Receita' && f.status === 'Pago')
+                    .reduce((sum, f) => sum + parseFloat(f.valor || 0), 0);
+                const despesaMensal = financas
+                    .filter(f => f.tipo === 'Despesa' && f.status === 'Pago')
+                    .reduce((sum, f) => sum + parseFloat(f.valor || 0), 0);
+                const saldoMensal = receitaMensal - despesaMensal;
+                const contasPendentes = financas.filter(f => f.status === 'Pendente' || f.status === 'Atrasado').length;
+
+                return React.createElement('div', { className: 'space-y-6' },
+                    React.createElement('h2', { className: 'text-3xl font-black text-gray-800' }, '📊 Dashboard'),
+                    
+                    // Cards de Resumo
+                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4' },
+                        React.createElement(Card, { className: 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' },
+                            React.createElement('h3', { className: 'text-sm font-semibold mb-2 opacity-90' }, 'Total de Imóveis'),
+                            React.createElement('p', { className: 'text-4xl font-black' }, totalImoveis),
+                            React.createElement('p', { className: 'text-xs mt-2 opacity-75' }, '🏠 Cadastrados no sistema')
+                        ),
+                        React.createElement(Card, { className: 'bg-gradient-to-br from-green-500 to-green-600 text-white' },
+                            React.createElement('h3', { className: 'text-sm font-semibold mb-2 opacity-90' }, 'Propriedades Ocupadas'),
+                            React.createElement('p', { className: 'text-4xl font-black' }, propriedadesOcupadas),
+                            React.createElement('p', { className: 'text-xs mt-2 opacity-75' }, `✅ ${propriedadesVagas} vagas disponíveis`)
+                        ),
+                        React.createElement(Card, { className: 'bg-gradient-to-br from-purple-500 to-purple-600 text-white' },
+                            React.createElement('h3', { className: 'text-sm font-semibold mb-2 opacity-90' }, 'Receita Mensal'),
+                            React.createElement('p', { className: 'text-3xl font-black' }, `R$ ${receitaMensal.toLocaleString('pt-BR')}`),
+                            React.createElement('p', { className: 'text-xs mt-2 opacity-75' }, '💰 Confirmadas')
+                        ),
+                        React.createElement(Card, { className: `bg-gradient-to-br ${saldoMensal >= 0 ? 'from-teal-500 to-teal-600' : 'from-red-500 to-red-600'} text-white` },
+                            React.createElement('h3', { className: 'text-sm font-semibold mb-2 opacity-90' }, 'Saldo Mensal'),
+                            React.createElement('p', { className: 'text-3xl font-black' }, `R$ ${saldoMensal.toLocaleString('pt-BR')}`),
+                            React.createElement('p', { className: 'text-xs mt-2 opacity-75' }, `📈 Receitas - Despesas`)
+                        )
+                    ),
+
+                    // Alertas e Pendências
+                    contasPendentes > 0 && React.createElement(Card, { className: 'bg-yellow-50 border-2 border-yellow-300' },
+                        React.createElement('h3', { className: 'text-lg font-bold text-yellow-800 mb-2' }, '⚠️ Atenção!'),
+                        React.createElement('p', { className: 'text-yellow-700' }, `Você tem ${contasPendentes} conta(s) pendente(s) ou atrasada(s).`),
+                        React.createElement(Button, { 
+                            onClick: () => setActiveTab('financas'), 
+                            variant: 'primary',
+                            className: 'mt-3'
+                        }, '📋 Ver Finanças')
+                    ),
+
+                    // Últimas Transações
+                    React.createElement(Card, {},
+                        React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '💸 Últimas Transações'),
+                        financas.length === 0 ? 
+                            React.createElement('p', { className: 'text-gray-500 text-center py-4' }, 'Nenhuma transação registrada.') :
+                            React.createElement('div', { className: 'space-y-3' },
+                                financas.slice(0, 5).map((item, idx) => 
+                                    React.createElement('div', { 
+                                        key: idx, 
+                                        className: 'flex justify-between items-center border-b pb-2'
+                                    },
+                                        React.createElement('div', {},
+                                            React.createElement('p', { className: 'font-semibold text-gray-800' }, item.descricao),
+                                            React.createElement('p', { className: 'text-xs text-gray-500' }, `${item.categoria} • ${item.data}`)
+                                        ),
+                                        React.createElement('p', { 
+                                            className: `font-bold ${item.tipo === 'Receita' ? 'text-green-600' : 'text-red-600'}`
+                                        }, `${item.tipo === 'Receita' ? '+' : '-'} R$ ${parseFloat(item.valor || 0).toLocaleString('pt-BR')}`)
+                                    )
+                                )
+                            )
+                    )
+                );
+            };
+
+            // FUNÇÃO PARA ENVIAR WHATSAPP DE COBRANÇA
+            const handleWhatsappCobrança = (item) => {
+                // Tenta localizar um inquilino pelo nome na descrição da transação
+                const foundTenant = inquilinosList.find(t => 
+                    t.nome && item.descricao && item.descricao.toLowerCase().includes(t.nome.toLowerCase())
+                );
+                
+                const phone = foundTenant ? foundTenant.telefone : '';
+                const name = foundTenant ? foundTenant.nome : 'Inquilino';
+                const valor = item.valor ? parseFloat(item.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00';
+                const descricao = item.descricao || 'Pagamento pendente';
+                const dataVencimento = item.data || 'a definir';
+                
+                const message = `Olá, ${name}! 😊\n\nEste é um lembrete sobre o pagamento pendente:\n\n📋 Descrição: ${descricao}\n💰 Valor: ${valor}\n📅 Vencimento: ${dataVencimento}\n\nPor favor, regularize sua situação o mais breve possível.\n\nObrigado!`;
+                
+                const encodedMessage = encodeURIComponent(message);
+                const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
+                
+                if (cleanPhone) {
+                    window.open(`https://wa.me/55${cleanPhone}?text=${encodedMessage}`, '_blank');
+                } else {
+                    alert('⚠️ Telefone do inquilino não encontrado. Cadastre o telefone primeiro.');
+                }
+            };
+
+            // FUNÇÃO PARA GERAR QR CODE PIX
+            const handlePixPayment = (item) => {
+                if (!userPixKey) {
+                    alert('⚠️ Configure sua chave PIX nas Configurações primeiro!');
+                    return;
+                }
+                
+                const valor = item.valor ? parseFloat(item.valor).toFixed(2) : '0.00';
+                const descricao = item.descricao || 'Pagamento';
+                
+                // Simula geração de QR Code (em produção, use uma API real)
+                const pixCopyPaste = `00020126580014BR.GOV.BCB.PIX0136${userPixKey}520400005303986540${valor.length}${valor}5802BR5913${descricao}6009SAO PAULO62070503***6304`;
+                
+                alert(`🎯 Chave PIX para pagamento:\n\n${userPixKey}\n\n💰 Valor: R$ ${parseFloat(valor).toLocaleString('pt-BR')}\n\n📋 Descrição: ${descricao}\n\n⚠️ Copie a chave PIX acima para receber o pagamento.`);
+                
+                // Tenta copiar para área de transferência
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(userPixKey)
+                        .then(() => alert('✅ Chave PIX copiada para área de transferência!'))
+                        .catch(() => {});
+                }
+            };
+
+            // TELA DE CONFIGURAÇÕES APRIMORADA
+            const ConfiguracoesView = () => {
+                const [newPixKey, setNewPixKey] = React.useState(userPixKey || '');
+
+                const handleSavePixKey = async () => {
+                    if (!newPixKey) {
+                        alert('⚠️ Digite uma chave PIX válida!');
+                        return;
+                    }
+
+                    try {
+                        // Buscar documento existente de segurança
+                        const securitySnap = await getIsolatedCollection('config_seguranca').doc('status').get();
+                        let existingData = {};
+                        
+                        if (securitySnap.exists) {
+                            existingData = securitySnap.data();
+                        }
+
+                        // Atualizar com nova chave PIX
+                        await getIsolatedCollection('config_seguranca').doc('status').set({
+                            ...existingData,
+                            pix: Security
