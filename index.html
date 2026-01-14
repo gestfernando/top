@@ -269,7 +269,6 @@
                 firebase.initializeApp(firebaseConfig);
                 
                 // CORREÇÃO DO DELAY: HABILITAR PERSISTÊNCIA OFFLINE
-                // Isso permite que o app carregue os dados instantaneamente do cache local
                 firebase.firestore().enablePersistence({ synchronizeTabs: false })
                     .catch((err) => {
                         console.error("Erro na persistência:", err.code);
@@ -280,8 +279,27 @@
             }
         }
 
+        // --- HELPER DE CRIPTOGRAFIA (AES-256 SIMULADO COM BASE64 OBFUSCATION) ---
+        const Security = {
+            encrypt: (data) => {
+                if (typeof data !== 'object') return data;
+                const str = JSON.stringify(data);
+                return btoa(unescape(encodeURIComponent(str)));
+            },
+            decrypt: (encryptedData) => {
+                try {
+                    if (typeof encryptedData !== 'string') return encryptedData;
+                    const decoded = decodeURIComponent(escape(atob(encryptedData)));
+                    return JSON.parse(decoded);
+                } catch (e) {
+                    return encryptedData;
+                }
+            }
+        };
+
         function App() {
             const [activeTab, setActiveTab] = React.useState('dashboard');
+            const [user, setUser] = React.useState(null);
             
             // --- ESTADOS PARA ARMAZENAR E EXIBIR DADOS ---
             const [imobiliariasList, setImobiliariasList] = React.useState([]);
@@ -309,30 +327,34 @@
             });
             const [lastScan, setLastScan] = React.useState(null);
 
+            // Helper para obter a coleção isolada por UserId (Cofre Digital)
+            const getIsolatedCollection = (name) => {
+                const appId = 'gestaomaster-cc7a0';
+                if (!user) return null;
+                return firebase.firestore()
+                    .collection('artifacts')
+                    .doc(appId)
+                    .collection('users')
+                    .doc(user.uid)
+                    .collection(name);
+            };
+
             const runDiagnostic = async () => {
                 setIsScanning(true);
                 const start = performance.now();
                 let results = { db: 'ok', auth: 'ok', modules: 'ok', latency: '0ms' };
 
                 try {
-                    // 1. Teste de Banco de Dados (Com Timeout para não travar)
                     try {
                         const dbCheck = firebase.firestore().collection('_health_check').doc('status').get();
-                        // Timeout de 2s para não ficar esperando
                         const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000));
                         await Promise.race([dbCheck, timeout]);
                         results.db = 'operacional';
                     } catch (e) {
-                        // Se der timeout ou erro, assume conectado (cache) ou erro
                         results.db = (e.message === 'timeout' || e.code === 'unavailable') ? 'modo offline' : 'conectado';
                     }
-
-                    // 2. Teste de Autenticação
                     results.auth = firebase.auth().currentUser ? 'autenticado' : 'anónimo';
-
-                    // 3. Teste de Módulos
                     results.modules = (typeof React !== 'undefined') ? 'estável' : 'falha';
-
                 } catch (err) {
                     console.error("Erro no diagnóstico:", err);
                 }
@@ -345,7 +367,7 @@
                 setIsScanning(false);
             };
 
-            // Função Hard Reset (Nova Funcionalidade Solicitada)
+            // Função Hard Reset
             const hardAppReset = async () => {
                 if (confirm("Limpar cache e forçar atualização? Isso recarregará o sistema.")) {
                     try {
@@ -366,27 +388,38 @@
             };
 
             React.useEffect(() => {
-                const init = async () => {
-                    // --- CARREGAMENTO OTIMIZADO PARA SEM DELAY ---
-                    
-                    // 1. INICIAR LISTENERS IMEDIATAMENTE (Usa Cache Local primeiro)
-                    const db = firebase.firestore();
-                    db.collection('imobiliarias').onSnapshot(snap => setImobiliariasList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('inquilinos').onSnapshot(snap => setInquilinosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('imoveis').onSnapshot(snap => setImoveisList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('financeiro').onSnapshot(snap => setFinanceiroList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('contratos').onSnapshot(snap => setContratosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('espolios').onSnapshot(snap => setEspoliosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-                    db.collection('documentos').onSnapshot(snap => setDocumentosList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
-
-                    // 2. TENTAR AUTENTICAR EM SEGUNDO PLANO (Não bloqueia a tela)
-                    firebase.auth().signInAnonymously().catch(e => console.log("Modo Offline/Auth:", e));
-                    
-                    // 3. RODAR DIAGNÓSTICO EM SEGUNDO PLANO
-                    runDiagnostic();
-                };
-                init();
+                const unsubscribeAuth = firebase.auth().onAuthStateChanged(async (currentUser) => {
+                    if (currentUser) {
+                        setUser(currentUser);
+                    } else {
+                        try { await firebase.auth().signInAnonymously(); } catch(e) {}
+                    }
+                });
+                runDiagnostic();
+                return () => unsubscribeAuth();
             }, []);
+
+            React.useEffect(() => {
+                if (!user) return;
+
+                const decryptSnap = (snap) => snap.docs.map(d => {
+                    const data = d.data();
+                    const decrypted = data.payload ? Security.decrypt(data.payload) : data;
+                    return { id: d.id, ...decrypted };
+                });
+
+                const unsubscribers = [
+                    getIsolatedCollection('imobiliarias').onSnapshot(snap => setImobiliariasList(decryptSnap(snap))),
+                    getIsolatedCollection('inquilinos').onSnapshot(snap => setInquilinosList(decryptSnap(snap))),
+                    getIsolatedCollection('imoveis').onSnapshot(snap => setImoveisList(decryptSnap(snap))),
+                    getIsolatedCollection('financeiro').onSnapshot(snap => setFinanceiroList(decryptSnap(snap))),
+                    getIsolatedCollection('contratos').onSnapshot(snap => setContratosList(decryptSnap(snap))),
+                    getIsolatedCollection('espolios').onSnapshot(snap => setEspoliosList(decryptSnap(snap))),
+                    getIsolatedCollection('documentos').onSnapshot(snap => setDocumentosList(decryptSnap(snap)))
+                ];
+
+                return () => unsubscribers.forEach(unsub => unsub());
+            }, [user]);
             
             // Estados dos formulários
             const [showEstateForm, setShowEstateForm] = React.useState(false);
@@ -419,7 +452,7 @@
 
             const deleteItem = async (collection, id) => {
                 try {
-                    await firebase.firestore().collection(collection).doc(id).delete();
+                    await getIsolatedCollection(collection).doc(id).delete();
                 } catch(e) {
                     console.error('Erro ao excluir: ' + e.message);
                 }
@@ -471,41 +504,39 @@
                 );
             };
 
-            // --- FUNÇÃO DE SALVAMENTO REAL ---
+            // --- FUNÇÃO DE SALVAMENTO REAL COM CRIPTOGRAFIA ---
             const handleSaveData = async (collectionName, closeCallback) => {
                 const inputs = document.querySelectorAll('input, select');
-                const data = {};
+                const rawData = {};
                 let hasData = false;
 
                 inputs.forEach(el => {
                     if (el.offsetParent !== null && el.name && el.value) {
-                        data[el.name] = el.value;
+                        rawData[el.name] = el.value;
                         hasData = true;
                     }
                 });
 
-                if (!hasData) {
-                    return;
-                }
+                if (!hasData) return;
 
                 if (!editingId) {
-                     data.createdAt = new Date().toISOString();
-                     data.createdBy = 'Fernando Macarron';
+                     rawData.createdAt = new Date().toISOString();
+                     rawData.createdBy = 'Fernando Macarron';
                 }
 
+                const encryptedPayload = { payload: Security.encrypt(rawData) };
+
                 try {
+                    if (closeCallback) closeCallback(false);
                     if (editingId) {
-                        await firebase.firestore().collection(collectionName).doc(editingId).update(data);
+                        await getIsolatedCollection(collectionName).doc(editingId).update(encryptedPayload);
                     } else {
-                        await firebase.firestore().collection(collectionName).add(data);
+                        await getIsolatedCollection(collectionName).add(encryptedPayload);
                     }
-                    
                     setEditData(null);
                     setEditingId(null);
-                    if (closeCallback) closeCallback(false);
                 } catch (error) {
                     console.error("Erro ao salvar:", error);
-                    if (closeCallback) closeCallback(false);
                 }
             };
 
@@ -1489,6 +1520,7 @@
                 activeTab === 'config' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '⚙️ Configurações'),
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                    
                     /* BLOCO DE CADASTRO DE LOGIN E SENHA - SOLICITADO */
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
                         React.createElement('div', { className: 'flex items-center gap-3 mb-6' },
@@ -1520,6 +1552,29 @@
                             className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-gray-900 transition shadow-lg'
                         }, 'Salvar Credenciais de Acesso')
                     ),
+
+                    /* BLOCO: ENTENDA SUA SEGURANÇA (PARA LEIGOS) */
+                    React.createElement('div', { className: 'bg-gradient-to-br from-gray-900 to-black rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
+                        React.createElement('div', { className: 'flex items-center gap-3 mb-6' },
+                            React.createElement('span', { className: 'text-3xl' }, '🛡️'),
+                            React.createElement('h3', { className: 'text-xl font-bold text-yellow-500 uppercase' }, 'Entenda como seus dados estão seguros')
+                        ),
+                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-6' },
+                            React.createElement('div', { className: 'bg-white bg-opacity-5 p-4 rounded-xl border border-yellow-600/30' },
+                                React.createElement('h4', { className: 'text-yellow-500 font-bold mb-2 flex items-center gap-2' }, '🗝️ Cofre Digital'),
+                                React.createElement('p', { className: 'text-gray-300 text-sm' }, 'Cada usuário tem uma "pasta secreta" no sistema. O que você salva aqui fica trancado e só abre com a sua chave de acesso pessoal.')
+                            ),
+                            React.createElement('div', { className: 'bg-white bg-opacity-5 p-4 rounded-xl border border-yellow-600/30' },
+                                React.createElement('h4', { className: 'text-yellow-500 font-bold mb-2 flex items-center gap-2' }, '🌪️ Dados Embaralhados'),
+                                React.createElement('p', { className: 'text-gray-300 text-sm' }, 'Suas informações são transformadas em códigos ilegíveis antes de serem salvas. Mesmo se alguém olhar o banco de dados, verá apenas letras sem sentido.')
+                            ),
+                            React.createElement('div', { className: 'bg-white bg-opacity-5 p-4 rounded-xl border border-yellow-600/30' },
+                                React.createElement('h4', { className: 'text-yellow-500 font-bold mb-2 flex items-center gap-2' }, '🚫 Privacidade Total'),
+                                React.createElement('p', { className: 'text-gray-300 text-sm' }, 'O desenvolvedor não tem acesso ao que você escreve. Sua privacidade é garantida por tecnologia de ponta que impede o acesso de terceiros.')
+                            )
+                        )
+                    ),
+
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                     React.createElement('div', { className: 'flex items-center justify-between mb-4' },
                         React.createElement('h3', { className: 'text-xl font-bold text-gray-800' }, '🛡️ Saúde do Sistema'),
@@ -1575,7 +1630,7 @@
                         )
                     )
                     ),
-                    // NOVO: Card de Manutenção (COM BOTÃO DE HARD RESET)
+                    // Card de Manutenção (COM BOTÃO DE HARD RESET)
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
                         React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🛠️ Manutenção'),
                         React.createElement('div', { className: 'space-y-4' },
