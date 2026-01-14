@@ -106,12 +106,12 @@
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         const firebaseConfig = {
-            apiKey: "AIzaSyDW9gF4k0e2XuMbcgKouyIUmo3uaUxLheE",
-            authDomain: "gestaomaster-cc7a0.firebaseapp.com",
-            projectId: "gestaomaster-cc7a0",
-            storageBucket: "gestaomaster-cc7a0.firebasestorage.app",
-            messagingSenderId: "61242084578",
-            appId: "1:61242084578:web:e1f4fd6a1287bfd3b422bb"
+            apiKey: "AIzaSyDptaY-3nx7i0eRbKbLaMaVJWOowXtk_4w",
+            authDomain: "adm-fernando.firebaseapp.com",
+            projectId: "adm-fernando",
+            storageBucket: "adm-fernando.firebasestorage.app",
+            messagingSenderId: "299527487486",
+            appId: "1:299527487486:web:301a342f98652e795c4aaf"
         };
 
         if (typeof firebase !== 'undefined' && !firebase.apps.length) {
@@ -171,7 +171,7 @@
 
             // CORREÇÃO DE PERMISSÕES (RULE 1): Caminho obrigatório para evitar FirebaseError
             const getIsolatedCollection = (name) => {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'gestaomaster-cc7a0';
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'adm-fernando';
                 if (!loginUser) return null;
                 // Caminho rigoroso: artifacts -> appId -> public -> data -> NomeDaColeção
                 return firebase.firestore()
@@ -207,7 +207,7 @@
             const resetCloudCredentials = async () => {
                 if (confirm("⚠️ ATENÇÃO: Isso excluirá permanentemente seu login e senha da nuvem. O sistema será reiniciado e você precisará criar um novo acesso. Deseja continuar?")) {
                     try {
-                        const appId = typeof __app_id !== 'undefined' ? __app_id : 'gestaomaster-cc7a0';
+                        const appId = typeof __app_id !== 'undefined' ? __app_id : 'adm-fernando';
                         await firebase.firestore()
                             .collection('artifacts').doc(appId)
                             .collection('public').doc('data')
@@ -235,7 +235,7 @@
                         await firebase.auth().signInAnonymously();
                     }
 
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'gestaomaster-cc7a0';
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'adm-fernando';
                     const regDoc = await firebase.firestore()
                         .collection('artifacts').doc(appId)
                         .collection('public').doc('data')
@@ -272,7 +272,7 @@
                 };
 
                 try {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'gestaomaster-cc7a0';
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'adm-fernando';
                     await firebase.firestore()
                         .collection('artifacts').doc(appId)
                         .collection('public').doc('data')
@@ -307,7 +307,7 @@
                     return { id: d.id, ...decrypted };
                 });
 
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'gestaomaster-cc7a0';
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'adm-fernando';
                 const unsubscribers = [
                     getIsolatedCollection('imobiliarias').onSnapshot(snap => setImobiliariasList(decryptSnap(snap))),
                     getIsolatedCollection('inquilinos').onSnapshot(snap => setInquilinosList(decryptSnap(snap))),
@@ -388,7 +388,7 @@
                 if (!pass) { return; }
                 const data = { pass: Security.encrypt(pass), recovery: Security.encrypt(email), pix: Security.encrypt(pix), date: new Date().toISOString() };
                 try {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'gestaomaster-cc7a0';
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'adm-fernando';
                     await firebase.firestore()
                         .collection('artifacts').doc(appId)
                         .collection('public').doc('data')
