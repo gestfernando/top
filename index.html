@@ -253,7 +253,9 @@
         if (typeof firebase !== 'undefined' && !firebase.apps.length) {
             try {
                 firebase.initializeApp(firebaseConfig);
-                firebase.firestore().enablePersistence({ synchronizeTabs: false })
+                
+                // CORREÇÃO: Habilitar sincronização multi-aba para evitar erro de failed-precondition
+                firebase.firestore().enablePersistence({ synchronizeTabs: true })
                     .catch((err) => {
                         console.error("Erro na persistência:", err.code);
                     });
@@ -327,6 +329,7 @@
 
             const getIsolatedCollection = (name) => {
                 const appId = 'adm-fernando';
+                // RECOMENDAÇÃO REGRA 3: Sempre verificar o user
                 if (!user) return null;
                 return firebase.firestore()
                     .collection('artifacts')
@@ -577,6 +580,7 @@
                 }
             };
 
+            // CORREÇÃO DO ERRO TYPEERROR: CANNOT READ PROPERTIES OF NULL (READING 'DOC')
             const handleSaveCredentials = async () => {
                 const loginEl = document.getElementsByName('login_config')[0];
                 const passEl = document.getElementsByName('senha_config')[0];
@@ -586,6 +590,19 @@
                 if (!loginEl.value || !passEl.value) {
                     alert('⚠️ Por favor, preencha o login e a senha.');
                     return;
+                }
+
+                // REGRA 3: GARANTIR QUE O USER NÃO É NULL ANTES DE ACESSAR O BANCO
+                let currentUser = user;
+                if (!currentUser) {
+                    try {
+                        const res = await firebase.auth().signInAnonymously();
+                        currentUser = res.user;
+                        setUser(currentUser);
+                    } catch (e) {
+                        alert("⚠️ O sistema ainda está carregando a conexão de segurança. Aguarde 2 segundos e tente novamente.");
+                        return;
+                    }
                 }
 
                 const credentialData = {
@@ -598,11 +615,15 @@
                 };
 
                 try {
-                    await getIsolatedCollection('config_seguranca').doc('status').set(credentialData);
+                    const isolated = getIsolatedCollection('config_seguranca');
+                    if (!isolated) throw new Error("Conexão não inicializada.");
+
+                    await isolated.doc('status').set(credentialData);
                     alert('✅ Conta configurada com sucesso! Agora realize o login.');
                     setTimeout(() => window.location.reload(), 1500);
                 } catch (e) {
-                    console.error("Erro:", e);
+                    console.error("Erro ao salvar credenciais:", e);
+                    alert("Erro técnico: " + e.message);
                 }
             };
 
