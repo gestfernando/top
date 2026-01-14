@@ -304,6 +304,10 @@
             const [showSafetyWarning, setShowSafetyWarning] = React.useState(true); // Estado para o aviso do Dashboard
             const [hasCredentials, setHasCredentials] = React.useState(true); // Se já tiver cadastro, aviso some
             
+            // --- NOVOS ESTADOS PARA COBRANÇA ---
+            const [userPixKey, setUserPixKey] = React.useState('');
+            const [viewingRecibo, setViewingRecibo] = React.useState(null);
+
             // --- ESTADOS PARA ARMAZENAR E EXIBIR DADOS ---
             const [imobiliariasList, setImobiliariasList] = React.useState([]);
             const [inquilinosList, setInquilinosList] = React.useState([]);
@@ -312,6 +316,14 @@
             const [contratosList, setContratosList] = React.useState([]);
             const [espoliosList, setEspoliosList] = React.useState([]);
             const [documentosList, setDocumentosList] = React.useState([]);
+            
+            // --- ESTADOS DA ABA PESSOAL (ADICIONADO) ---
+            const [pessoalTarefas, setPessoalTarefas] = React.useState([]);
+            const [pessoalNotas, setPessoalNotas] = React.useState([]);
+            const [pessoalAcessos, setPessoalAcessos] = React.useState([]);
+            const [pessoalCompras, setPessoalCompras] = React.useState([]);
+            const [pessoalAgenda, setPessoalAgenda] = React.useState([]);
+            const [pessoalContatos, setPessoalContatos] = React.useState([]);
 
             // --- ESTADOS PARA EDIÇÃO ---
             const [editingId, setEditingId] = React.useState(null);
@@ -419,9 +431,23 @@
                     getIsolatedCollection('contratos').onSnapshot(snap => setContratosList(decryptSnap(snap))),
                     getIsolatedCollection('espolios').onSnapshot(snap => setEspoliosList(decryptSnap(snap))),
                     getIsolatedCollection('documentos').onSnapshot(snap => setDocumentosList(decryptSnap(snap))),
-                    // Listener especial para saber se o usuário já tem credenciais cadastradas
+                    // Listeners da Aba Pessoal
+                    getIsolatedCollection('pessoal_tarefas').onSnapshot(snap => setPessoalTarefas(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_notas').onSnapshot(snap => setPessoalNotas(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_acessos').onSnapshot(snap => setPessoalAcessos(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_compras').onSnapshot(snap => setPessoalCompras(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_agenda').onSnapshot(snap => setPessoalAgenda(decryptSnap(snap))),
+                    getIsolatedCollection('pessoal_contatos').onSnapshot(snap => setPessoalContatos(decryptSnap(snap))),
+                    // Listener especial para segurança e PIX
                     getIsolatedCollection('config_seguranca').onSnapshot(snap => {
                         setHasCredentials(!snap.empty);
+                        if (!snap.empty) {
+                            // Tenta buscar a chave pix dentro do documento de segurança
+                            snap.docs.forEach(doc => {
+                                const data = doc.data();
+                                if (data.pix) setUserPixKey(Security.decrypt(data.pix));
+                            });
+                        }
                     })
                 ];
 
@@ -436,6 +462,14 @@
             const [showFinanceForm, setShowFinanceForm] = React.useState(false);
             const [showContractForm, setShowContractForm] = React.useState(false);
             const [showDocumentForm, setShowDocumentForm] = React.useState(false);
+            // Estados dos formulários pessoais
+            const [showPersonalTaskForm, setShowPersonalTaskForm] = React.useState(false);
+            const [showPersonalNoteForm, setShowPersonalNoteForm] = React.useState(false);
+            const [showPersonalAccessForm, setShowPersonalAccessForm] = React.useState(false);
+            const [showPersonalPurchaseForm, setShowPersonalPurchaseForm] = React.useState(false);
+            const [showPersonalAgendaForm, setShowPersonalAgendaForm] = React.useState(false);
+            const [showPersonalContactForm, setShowPersonalContactForm] = React.useState(false);
+
 
             // Estados para Relatórios
             const [showReportModal, setShowReportModal] = React.useState(false);
@@ -513,7 +547,7 @@
 
             // --- FUNÇÃO DE SALVAMENTO REAL COM CRIPTOGRAFIA ---
             const handleSaveData = async (collectionName, closeCallback) => {
-                const inputs = document.querySelectorAll('input, select');
+                const inputs = document.querySelectorAll('input, select, textarea');
                 const rawData = {};
                 let hasData = false;
 
@@ -547,11 +581,12 @@
                 }
             };
 
-            // FUNÇÃO ESPECÍFICA PARA SALVAR LOGIN E SENHA
+            // FUNÇÃO ESPECÍFICA PARA SALVAR LOGIN, SENHA E PIX
             const handleSaveCredentials = async () => {
                 const loginEl = document.getElementsByName('login_config')[0];
                 const passEl = document.getElementsByName('senha_config')[0];
                 const emailEl = document.getElementsByName('email_recuperacao')[0];
+                const pixEl = document.getElementsByName('pix_config')[0];
 
                 if (!loginEl.value || !passEl.value) {
                     alert('⚠️ Por favor, preencha o login e a senha.');
@@ -562,16 +597,35 @@
                     login: Security.encrypt(loginEl.value),
                     pass: Security.encrypt(passEl.value),
                     recovery: Security.encrypt(emailEl.value || ''),
+                    pix: Security.encrypt(pixEl.value || ''),
                     status: 'registered',
                     date: new Date().toISOString()
                 };
 
                 try {
                     await getIsolatedCollection('config_seguranca').doc('status').set(credentialData);
-                    alert('✅ Credenciais salvas! O aviso de segurança foi desativado permanentemente.');
+                    alert('✅ Configurações salvas com sucesso!');
                 } catch (e) {
                     console.error("Erro:", e);
                 }
+            };
+
+            // FUNÇÃO PARA ENVIAR WHATSAPP DE COBRANÇA
+            const handleWhatsappCobrança = (item) => {
+                // Tenta localizar um inquilino pelo nome na descrição da transação
+                const foundTenant = inquilinosList.find(t => 
+                    t.nome && item.descricao && item.descricao.toLowerCase().includes(t.nome.toLowerCase())
+                );
+                
+                const phone = foundTenant ? foundTenant.telefone.replace(/\D/g, '') : '';
+                
+                if (!phone && !confirm("Não encontrei um inquilino vinculado automaticamente pelo nome. Deseja abrir o WhatsApp mesmo assim?")) {
+                    return;
+                }
+
+                const msg = `Olá${foundTenant ? ' ' + foundTenant.nome : ''}, referente a: *${item.descricao}*.\nValor: *R$ ${item.valor}*.\nVencimento: ${item.data}.\n\nPara facilitar, segue minha chave PIX: *${userPixKey || 'Consulte-nos'}*\n\nObrigado!`;
+                
+                window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
             };
 
             const DataList = ({ items, collection, renderItem, onEdit }) => {
@@ -585,6 +639,19 @@
                     items.map((item) => React.createElement('div', { key: item.id, className: 'bg-white p-4 rounded-lg shadow border-l-4 border-yellow-500 flex justify-between items-center' },
                         React.createElement('div', { className: 'flex-1' }, renderItem(item)),
                         React.createElement('div', { className: 'flex gap-2 ml-4' },
+                            // BOTÕES EXTRAS PARA FINANCEIRO
+                            collection === 'financeiro' && item.tipo === 'Receita (Entrada)' && React.createElement(React.Fragment, null,
+                                React.createElement('button', {
+                                    onClick: () => setViewingRecibo(item),
+                                    className: 'bg-green-100 text-green-700 p-2 rounded hover:bg-green-200',
+                                    title: 'Gerar Recibo Digital'
+                                }, '🎫'),
+                                React.createElement('button', {
+                                    onClick: () => handleWhatsappCobrança(item),
+                                    className: 'bg-green-100 text-green-700 p-2 rounded hover:bg-green-200',
+                                    title: 'Cobrar no WhatsApp'
+                                }, '💬')
+                            ),
                             React.createElement('button', { 
                                 onClick: () => onEdit(item),
                                 className: 'bg-blue-100 text-blue-600 p-2 rounded hover:bg-blue-200',
@@ -630,12 +697,73 @@
                 }
             };
 
+            // MODAL DE RECIBO DIGITAL
+            const ReciboModal = ({ item, onClose }) => {
+                if (!item) return null;
+
+                const handlePrintRecibo = () => {
+                    const printContents = document.getElementById('printable-recibo').innerHTML;
+                    const win = window.open('', '', 'width=800,height=600');
+                    win.document.write('<html><head><title>Recibo Digital</title>');
+                    win.document.write('<style>body{font-family:sans-serif; padding:20px;} .recibo-container{border:2px dashed #eab308; padding:30px; border-radius:10px;} .header{text-align:center; color:#eab308; margin-bottom:20px;} .row{display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;} .footer{text-align:center; margin-top:30px; font-size:12px; color:#666;}</style>');
+                    win.document.write('</head><body>');
+                    win.document.write(printContents);
+                    win.document.write('</body></html>');
+                    win.document.close();
+                    setTimeout(() => { win.print(); win.close(); }, 500);
+                };
+
+                return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-70 z-[100] flex items-center justify-center p-4 animate-fade-in no-print' },
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden' },
+                        React.createElement('div', { className: 'bg-gradient-to-r from-yellow-600 to-yellow-500 p-4 flex justify-between items-center' },
+                            React.createElement('h3', { className: 'text-white font-bold text-lg' }, '🎫 Recibo Digital'),
+                            React.createElement('button', { onClick: onClose, className: 'text-white font-bold text-2xl hover:text-red-100' }, '×')
+                        ),
+                        React.createElement('div', { id: 'printable-recibo', className: 'p-6 bg-white recibo-container' },
+                            React.createElement('div', { className: 'text-center border-b-2 border-yellow-500 pb-4 mb-6' },
+                                React.createElement('h1', { className: 'text-2xl font-black text-gray-800 uppercase tracking-widest' }, 'RECIBO'),
+                                React.createElement('p', { className: 'text-sm text-gray-500' }, `Emitido em: ${new Date().toLocaleDateString('pt-BR')}`)
+                            ),
+                            React.createElement('div', { className: 'space-y-4' },
+                                React.createElement('div', { className: 'flex justify-between items-center border-b border-gray-100 pb-2' },
+                                    React.createElement('span', { className: 'text-gray-500 text-sm font-bold uppercase' }, 'Valor'),
+                                    React.createElement('span', { className: 'text-2xl font-bold text-green-600' }, `R$ ${item.valor}`)
+                                ),
+                                React.createElement('div', { className: 'flex justify-between items-center border-b border-gray-100 pb-2' },
+                                    React.createElement('span', { className: 'text-gray-500 text-sm font-bold uppercase' }, 'Referente a'),
+                                    React.createElement('span', { className: 'text-gray-800 font-medium' }, item.descricao)
+                                ),
+                                React.createElement('div', { className: 'flex justify-between items-center border-b border-gray-100 pb-2' },
+                                    React.createElement('span', { className: 'text-gray-500 text-sm font-bold uppercase' }, 'Vencimento'),
+                                    React.createElement('span', { className: 'text-gray-800 font-medium' }, item.data)
+                                ),
+                                React.createElement('div', { className: 'flex justify-between items-center border-b border-gray-100 pb-2' },
+                                    React.createElement('span', { className: 'text-gray-500 text-sm font-bold uppercase' }, 'Categoria'),
+                                    React.createElement('span', { className: 'bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded font-bold' }, item.categoria)
+                                ),
+                                React.createElement('div', { className: 'bg-gray-50 p-4 rounded-lg mt-6 text-center' },
+                                    React.createElement('p', { className: 'text-xs text-gray-500 uppercase font-bold mb-1' }, 'Dados para Pagamento (PIX)'),
+                                    React.createElement('p', { className: 'text-lg font-mono font-bold text-gray-800 select-all' }, userPixKey || 'Chave não cadastrada')
+                                )
+                            ),
+                            React.createElement('div', { className: 'mt-8 text-center' },
+                                React.createElement('p', { className: 'text-[10px] text-gray-400' }, 'Recibo gerado eletronicamente pelo Sistema Gestão Master'),
+                                React.createElement('p', { className: 'text-[10px] text-gray-400' }, 'Fernando Macarron')
+                            )
+                        ),
+                        React.createElement('div', { className: 'p-4 bg-gray-100 flex gap-4' },
+                            React.createElement('button', { onClick: handlePrintRecibo, className: 'flex-1 bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-3 rounded-lg shadow' }, '🖨️ Imprimir Recibo'),
+                            React.createElement('button', { onClick: onClose, className: 'flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 rounded-lg' }, 'Fechar')
+                        )
+                    )
+                );
+            };
+
             const ReadModal = ({ item, title, onClose }) => {
                 if (!item) return null;
 
                 const handlePrintModal = () => {
                     const printContents = document.getElementById('printable-read-area').innerHTML;
-                    const originalContents = document.body.innerHTML;
                     
                     document.body.innerHTML = `
                         <div style="padding: 40px; font-family: 'Inter', sans-serif;">
@@ -753,6 +881,8 @@
                 ),
                 React.createElement('nav', { className: 'flex overflow-x-auto gap-2 md:block md:space-y-2 pb-2 md:pb-0' },
                     React.createElement(MenuButton, { tab: 'dashboard', icon: '📊', label: 'Dashboard' }),
+                    // ADICIONADO: Aba Pessoal
+                    React.createElement(MenuButton, { tab: 'personal', icon: '👤', label: 'Pessoal' }),
                     React.createElement(MenuButton, { tab: 'realestate', icon: '🏢', label: 'Imobiliárias' }),
                     React.createElement(MenuButton, { tab: 'tenants', icon: '👥', label: 'Inquilinos' }),
                     React.createElement(MenuButton, { tab: 'properties', icon: '🏠', label: 'Imóveis' }),
@@ -775,6 +905,12 @@
                     item: viewingItem.data, 
                     title: viewingItem.title, 
                     onClose: () => setViewingItem(null) 
+                }),
+
+                // CORREÇÃO: Modal de Recibo foi adicionado aqui para corrigir o erro de referência
+                viewingRecibo && React.createElement(ReciboModal, {
+                    item: viewingRecibo,
+                    onClose: () => setViewingRecibo(null)
                 }),
 
                 printPreviewData && React.createElement('div', { 
@@ -841,7 +977,7 @@
                     React.createElement('div', { className: 'text-3xl' }, '⚠️'),
                     React.createElement('div', null,
                         React.createElement('p', { className: 'text-red-900 font-black uppercase text-sm tracking-tight' }, 'Ação Necessária Importante (Toque para fechar)'),
-                        React.createElement('p', { className: 'text-red-700 text-xs font-semibold' }, 'Para sua total segurança e privacidade, você deve cadastrar seu Login e Senha pessoal na aba "Configurações" agora mesmo.')
+                        React.createElement('p', { className: 'text-red-700 text-xs font-semibold' }, 'Para sua total segurança e privacidade, você deve cadastrar seu Login, Senha e Chave PIX na aba "Configurações".')
                     )
                 ),
                 React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, 'Dashboard'),
@@ -881,6 +1017,24 @@
                         ),
                         React.createElement('div', { className: 'text-5xl opacity-20' }, '💼')
                     )
+                    )
+                ),
+
+                // ADICIONADO: Widgets Pessoais no Dashboard
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-l-8 border-red-500 flex items-center justify-between' },
+                        React.createElement('div', null,
+                            React.createElement('h4', { className: 'text-red-600 font-bold uppercase text-xs tracking-widest mb-1' }, 'Próximos Compromissos'),
+                            React.createElement('p', { className: 'text-2xl font-black text-gray-800' }, pessoalAgenda.length > 0 ? `${pessoalAgenda.length} Agendados` : 'Nenhum para hoje')
+                        ),
+                        React.createElement('button', { onClick: () => setActiveTab('personal'), className: 'bg-red-50 text-red-600 p-3 rounded-lg hover:bg-red-100 transition font-bold text-xs' }, 'VER AGENDA')
+                    ),
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-l-8 border-green-500 flex items-center justify-between' },
+                        React.createElement('div', null,
+                            React.createElement('h4', { className: 'text-green-600 font-bold uppercase text-xs tracking-widest mb-1' }, 'Tarefas Pendentes'),
+                            React.createElement('p', { className: 'text-2xl font-black text-gray-800' }, pessoalTarefas.filter(t => !t.concluida).length > 0 ? `${pessoalTarefas.filter(t => !t.concluida).length} Pendentes` : 'Tudo pronto!')
+                        ),
+                        React.createElement('button', { onClick: () => setActiveTab('personal'), className: 'bg-green-50 text-green-600 p-3 rounded-lg hover:bg-green-100 transition font-bold text-xs' }, 'VER TAREFAS')
                     )
                 ),
 
@@ -933,6 +1087,211 @@
                     React.createElement('h2', { className: 'text-2xl font-bold mb-2' }, '👋 Bem-vindo, Fernando!'),
                     React.createElement('p', { className: 'text-gray-900 font-medium' }, 'Use o menu lateral para navegar entre os módulos do sistema.')
                 )
+                ),
+
+                // ==================== ABA PESSOAL (ADICIONADA) ====================
+                activeTab === 'personal' && React.createElement('div', { className: 'space-y-6 animate-fade-in pb-10' },
+                    React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '👤 Gerenciamento Pessoal'),
+                    
+                    // Seção Superior: Agenda, WhatsApp e Acessos
+                    React.createElement('div', { className: 'grid grid-cols-1 lg:grid-cols-2 gap-6' },
+                        
+                        // Agenda de Compromissos Diários
+                        React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-red-500' },
+                            React.createElement('div', { className: 'flex justify-between items-center mb-6' },
+                                React.createElement('h3', { className: 'text-xl font-bold text-gray-800 flex items-center gap-2' }, '📅 Agenda de Hoje'),
+                                React.createElement('button', { onClick: () => setShowPersonalAgendaForm(true), className: 'text-red-600 font-bold text-sm hover:underline' }, '+ Novo Evento')
+                            ),
+                            showPersonalAgendaForm && React.createElement('div', { className: 'mb-6 p-4 bg-red-50 rounded-lg animate-fade-in' },
+                                React.createElement(FormInput, { label: 'Compromisso', name: 'evento', placeholder: 'Ex: Reunião com Advogado' }),
+                                React.createElement(FormInput, { label: 'Horário', name: 'horario', type: 'time' }),
+                                React.createElement('div', { className: 'flex gap-2' },
+                                    React.createElement('button', { onClick: () => handleSaveData('pessoal_agenda', setShowPersonalAgendaForm), className: 'bg-red-600 text-white px-4 py-2 rounded font-bold shadow' }, 'Agendar'),
+                                    React.createElement('button', { onClick: () => setShowPersonalAgendaForm(false), className: 'text-gray-500' }, 'Cancelar')
+                                )
+                            ),
+                            React.createElement('div', { className: 'space-y-3' },
+                                pessoalAgenda.length > 0 ? pessoalAgenda.map(event => (
+                                    React.createElement('div', { key: event.id, className: 'flex items-center gap-4 p-3 bg-gray-50 border-l-4 border-red-400 rounded-lg' },
+                                        React.createElement('span', { className: 'font-black text-red-600 min-w-[60px]' }, event.horario),
+                                        React.createElement('span', { className: 'flex-1 font-semibold text-gray-800' }, event.evento),
+                                        React.createElement('button', { onClick: () => deleteItem('pessoal_agenda', event.id), className: 'text-gray-300 hover:text-red-500' }, '🗑️')
+                                    )
+                                )) : React.createElement('p', { className: 'text-center text-gray-400 text-sm' }, 'Sem compromissos hoje.')
+                            )
+                        ),
+
+                        // WhatsApp Direto e Acessos
+                        React.createElement('div', { className: 'space-y-6' },
+                            // Bloco WhatsApp Direto
+                            React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-green-500' },
+                                React.createElement('h3', { className: 'text-xl font-bold text-gray-800 flex items-center gap-2 mb-4' }, '💬 WhatsApp Direto'),
+                                React.createElement('p', { className: 'text-xs text-gray-500 mb-4' }, 'Inicie uma conversa sem precisar salvar o contato no celular.'),
+                                React.createElement('div', { className: 'flex gap-2' },
+                                    React.createElement('input', { 
+                                        type: 'tel', 
+                                        id: 'wa_direct_number',
+                                        placeholder: 'DDD + Número (Ex: 11999998888)',
+                                        className: 'flex-1 px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-green-500'
+                                    }),
+                                    React.createElement('button', { 
+                                        onClick: () => {
+                                            const num = document.getElementById('wa_direct_number').value.replace(/\D/g, '');
+                                            if(num) window.open(`https://wa.me/55${num}`, '_blank');
+                                        },
+                                        className: 'bg-green-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700 transition shadow'
+                                    }, 'CONVERSAR')
+                                )
+                            ),
+                            // Gerenciador de Acessos
+                            React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                                React.createElement('div', { className: 'flex justify-between items-center mb-6' },
+                                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 flex items-center gap-2' }, '🔐 Chaves e Acessos'),
+                                    React.createElement('button', { onClick: () => setShowPersonalAccessForm(true), className: 'text-yellow-600 font-bold text-sm hover:underline' }, '+ Novo Acesso')
+                                ),
+                                showPersonalAccessForm && React.createElement('div', { className: 'mb-6 p-4 bg-yellow-50 rounded-lg animate-fade-in' },
+                                    React.createElement(FormInput, { label: 'Site/Serviço', name: 'servico', placeholder: 'Ex: Gov.br' }),
+                                    React.createElement(FormInput, { label: 'Usuário/Email', name: 'usuario' }),
+                                    React.createElement(FormInput, { label: 'Senha/Chave', name: 'senha' }),
+                                    React.createElement('div', { className: 'flex gap-2' },
+                                        React.createElement('button', { onClick: () => handleSaveData('pessoal_acessos', setShowPersonalAccessForm), className: 'bg-yellow-600 text-black px-4 py-2 rounded font-bold' }, 'Salvar'),
+                                        React.createElement('button', { onClick: () => setShowPersonalAccessForm(false), className: 'text-gray-500' }, 'Cancelar')
+                                    )
+                                ),
+                                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-3' },
+                                    pessoalAcessos.map(acesso => (
+                                        React.createElement('div', { key: acesso.id, className: 'p-3 bg-gray-50 border border-gray-100 rounded-lg relative group' },
+                                            React.createElement('h4', { className: 'font-bold text-[10px] text-yellow-700 uppercase mb-1' }, acesso.servico),
+                                            React.createElement('p', { className: 'text-xs text-gray-600 truncate' }, `👤 ${acesso.usuario}`),
+                                            React.createElement('p', { className: 'text-xs text-gray-900 font-mono mt-1 bg-white p-1 rounded border border-gray-200' }, acesso.senha),
+                                            React.createElement('button', { onClick: () => deleteItem('pessoal_acessos', acesso.id), className: 'absolute top-2 right-2 hidden group-hover:block text-gray-300' }, '×')
+                                        )
+                                    ))
+                                )
+                            )
+                        )
+                    ),
+
+                    // Seção Central: Agenda de Contatos Pessoais (NOVO)
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-blue-600' },
+                        React.createElement('div', { className: 'flex justify-between items-center mb-6' },
+                            React.createElement('h3', { className: 'text-xl font-bold text-gray-800 flex items-center gap-2' }, '📞 Agenda de Contatos Pessoais'),
+                            React.createElement('button', { onClick: () => setShowPersonalContactForm(true), className: 'bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs shadow hover:bg-blue-700 transition' }, '+ Novo Contato')
+                        ),
+                        showPersonalContactForm && React.createElement('div', { className: 'mb-6 p-4 bg-blue-50 rounded-lg animate-fade-in' },
+                            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-4' },
+                                React.createElement(FormInput, { label: 'Nome do Contato', name: 'nome', placeholder: 'Ex: Dr. Ricardo' }),
+                                React.createElement(FormInput, { label: 'Telefone/WhatsApp', name: 'telefone', placeholder: 'Ex: 11999998888' }),
+                                React.createElement(FormInput, { label: 'Observação/Parentesco', name: 'obs', placeholder: 'Ex: Médico da Família' })
+                            ),
+                            React.createElement('div', { className: 'flex gap-2' },
+                                React.createElement('button', { onClick: () => handleSaveData('pessoal_contatos', setShowPersonalContactForm), className: 'bg-blue-600 text-white px-6 py-2 rounded-lg font-bold shadow' }, 'Salvar Contato'),
+                                React.createElement('button', { onClick: () => setShowPersonalContactForm(false), className: 'text-gray-500' }, 'Cancelar')
+                            )
+                        ),
+                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' },
+                            pessoalContatos.map(c => (
+                                React.createElement('div', { key: c.id, className: 'flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition group' },
+                                    React.createElement('div', { className: 'flex-1' },
+                                        React.createElement('p', { className: 'font-bold text-gray-900 leading-tight mb-1' }, c.nome),
+                                        React.createElement('p', { className: 'text-blue-600 font-bold text-sm mb-1' }, c.telefone),
+                                        React.createElement('p', { className: 'text-[10px] text-gray-500 italic' }, c.obs)
+                                    ),
+                                    React.createElement('div', { className: 'flex gap-1' },
+                                        React.createElement('button', { 
+                                            onClick: () => window.open(`https://wa.me/55${c.telefone.replace(/\D/g, '')}`, '_blank'),
+                                            className: 'p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition'
+                                        }, '💬'),
+                                        React.createElement('button', { 
+                                            onClick: () => deleteItem('pessoal_contatos', c.id),
+                                            className: 'p-2 bg-red-50 text-red-400 rounded-lg hover:bg-red-100 opacity-0 group-hover:opacity-100 transition'
+                                        }, '🗑️')
+                                    )
+                                )
+                            ))
+                        )
+                    ),
+
+                    // Seção Central 2: Lista de Compras
+                    React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-green-600' },
+                        React.createElement('div', { className: 'flex justify-between items-center mb-6' },
+                            React.createElement('h3', { className: 'text-xl font-bold text-gray-800 flex items-center gap-2' }, '🛒 Lista de Compras / Suprimentos'),
+                            React.createElement('button', { onClick: () => setShowPersonalPurchaseForm(true), className: 'bg-green-100 text-green-700 px-4 py-2 rounded-lg font-bold text-xs hover:bg-green-200 transition' }, '+ Adicionar Item')
+                        ),
+                        showPersonalPurchaseForm && React.createElement('div', { className: 'mb-6 p-4 bg-green-50 rounded-lg animate-fade-in' },
+                            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-4' },
+                                React.createElement(FormInput, { label: 'Item', name: 'item', placeholder: 'Ex: Papel Sulfite' }),
+                                React.createElement(FormInput, { label: 'Qtd/Obs', name: 'quantidade', placeholder: 'Ex: 2 resmas' }),
+                                React.createElement('div', { className: 'flex items-end' },
+                                    React.createElement('button', { onClick: () => handleSaveData('pessoal_compras', setShowPersonalPurchaseForm), className: 'w-full bg-green-600 text-white px-4 py-3 rounded-lg font-bold h-[50px]' }, 'Adicionar à Lista')
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3' },
+                            pessoalCompras.map(c => (
+                                React.createElement('div', { key: c.id, className: 'flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg shadow-sm hover:border-green-200' },
+                                    React.createElement('div', null,
+                                        React.createElement('p', { className: 'font-bold text-gray-800 leading-none mb-1' }, c.item),
+                                        React.createElement('p', { className: 'text-[10px] text-gray-500' }, c.quantidade)
+                                    ),
+                                    React.createElement('button', { onClick: () => deleteItem('pessoal_compras', c.id), className: 'text-gray-300 hover:text-green-600' }, '✔️')
+                                )
+                            ))
+                        )
+                    ),
+
+                    // Seção Inferior: Notas e Tarefas
+                    React.createElement('div', { className: 'grid grid-cols-1 lg:grid-cols-2 gap-6' },
+                        React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-blue-500' },
+                            React.createElement('div', { className: 'flex justify-between items-center mb-4' },
+                                React.createElement('h3', { className: 'text-xl font-bold text-gray-800' }, '📝 Bloco de Notas'),
+                                React.createElement('button', { onClick: () => setShowPersonalNoteForm(true), className: 'text-blue-600 font-bold hover:underline text-sm' }, '+ Nova Nota')
+                            ),
+                            showPersonalNoteForm && React.createElement('div', { className: 'mb-4 p-4 bg-blue-50 rounded-lg animate-fade-in' },
+                                React.createElement(FormInput, { label: 'Título', name: 'titulo' }),
+                                React.createElement('textarea', { name: 'conteudo', rows: 4, className: 'w-full px-4 py-3 border border-gray-300 rounded-lg outline-none mb-4' }),
+                                React.createElement('div', { className: 'flex gap-2' },
+                                    React.createElement('button', { onClick: () => handleSaveData('pessoal_notas', setShowPersonalNoteForm), className: 'bg-blue-600 text-white px-4 py-2 rounded font-bold' }, 'Salvar'),
+                                    React.createElement('button', { onClick: () => setShowPersonalNoteForm(false), className: 'text-gray-500' }, 'Cancelar')
+                                )
+                            ),
+                            React.createElement('div', { className: 'space-y-3' },
+                                pessoalNotas.map(nota => (
+                                    React.createElement('div', { key: nota.id, className: 'p-3 bg-gray-50 rounded-lg group' },
+                                        React.createElement('div', { className: 'flex justify-between' },
+                                            React.createElement('h4', { className: 'font-bold' }, nota.titulo),
+                                            React.createElement('button', { onClick: () => deleteItem('pessoal_notas', nota.id), className: 'text-gray-300 opacity-0 group-hover:opacity-100' }, '🗑️')
+                                        ),
+                                        React.createElement('p', { className: 'text-xs text-gray-600 mt-1' }, nota.conteudo)
+                                    )
+                                ))
+                            )
+                        ),
+
+                        React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-green-500' },
+                            React.createElement('div', { className: 'flex justify-between items-center mb-4' },
+                                React.createElement('h3', { className: 'text-xl font-bold text-gray-800' }, '✅ Checklist de Tarefas'),
+                                React.createElement('button', { onClick: () => setShowPersonalTaskForm(true), className: 'text-green-600 font-bold hover:underline text-sm' }, '+ Adicionar')
+                            ),
+                            showPersonalTaskForm && React.createElement('div', { className: 'mb-4 p-4 bg-green-50 rounded-lg' },
+                                React.createElement(FormInput, { label: 'Tarefa', name: 'tarefa' }),
+                                React.createElement(FormSelect, { label: 'Prioridade', options: ['Alta', 'Média', 'Baixa'], name: 'prioridade' }),
+                                React.createElement('div', { className: 'flex gap-2' },
+                                    React.createElement('button', { onClick: () => handleSaveData('pessoal_tarefas', setShowPersonalTaskForm), className: 'bg-green-600 text-white px-4 py-2 rounded font-bold' }, 'Salvar'),
+                                    React.createElement('button', { onClick: () => setShowPersonalTaskForm(false), className: 'text-gray-500' }, 'Cancelar')
+                                )
+                            ),
+                            React.createElement('div', { className: 'space-y-2' },
+                                pessoalTarefas.map(t => (
+                                    React.createElement('div', { key: t.id, className: 'flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg' },
+                                        React.createElement('input', { type: 'checkbox', checked: t.concluida || false, onChange: (e) => firebase.firestore().collection('pessoal_tarefas').doc(t.id).update({ concluida: e.target.checked }) }),
+                                        React.createElement('span', { className: `flex-1 ${t.concluida ? 'line-through text-gray-400' : ''}` }, t.tarefa),
+                                        React.createElement('button', { onClick: () => deleteItem('pessoal_tarefas', t.id), className: 'text-gray-300' }, '×')
+                                    )
+                                ))
+                            )
+                        )
+                    )
                 ),
 
                 // IMOBILIÁRIAS
@@ -1151,7 +1510,7 @@
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
                         React.createElement(FormSelect, { label: 'Tipo de Transação', options: ['Receita (Entrada)', 'Despesa (Saída)'], name: 'tipo' }),
-                        React.createElement(FormInput, { label: 'Descrição', placeholder: 'Ex: Aluguel Apto 101', name: 'descricao' }),
+                        React.createElement(FormInput, { label: 'Descrição (Ex: Aluguel do João)', placeholder: 'Ex: Aluguel Apto 101', name: 'descricao' }),
                         React.createElement(FormInput, { label: 'Valor (R$)', placeholder: '0,00', type: 'number', name: 'valor' }),
                         React.createElement(FormInput, { label: 'Data', type: 'date', name: 'data' }),
                         React.createElement(FormSelect, { label: 'Categoria', options: ['Aluguel', 'Condomínio', 'IPTU', 'Manutenção', 'Taxa Adm'], name: 'categoria' }),
@@ -1613,7 +1972,7 @@
                             React.createElement('span', { className: 'text-2xl' }, '🔐'),
                             React.createElement('h3', { className: 'text-xl font-bold text-gray-800 uppercase' }, 'Cadastro de Credenciais de Acesso')
                         ),
-                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-6' },
+                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
                             React.createElement('div', null,
                                 React.createElement('label', { className: 'block text-sm font-black text-gray-700 mb-2 uppercase' }, 'Definir Novo Login'),
                                 React.createElement('input', { 
@@ -1640,6 +1999,16 @@
                                     name: 'email_recuperacao',
                                     className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-yellow-500 outline-none transition-all'
                                 })
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('label', { className: 'block text-sm font-black text-gray-700 mb-2 uppercase' }, 'Sua Chave PIX'),
+                                React.createElement('input', { 
+                                    type: 'text', 
+                                    placeholder: 'CPF, Email ou Celular',
+                                    name: 'pix_config',
+                                    defaultValue: userPixKey,
+                                    className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-yellow-500 outline-none transition-all bg-yellow-50'
+                                })
                             )
                         ),
                         React.createElement('div', { className: 'mt-6 bg-yellow-50 p-4 rounded-lg mb-4 text-xs font-semibold text-yellow-800 border-l-4 border-yellow-500' },
@@ -1648,7 +2017,7 @@
                         React.createElement('button', { 
                             onClick: handleSaveCredentials,
                             className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-gray-900 transition shadow-lg'
-                        }, 'Salvar Credenciais de Acesso')
+                        }, 'Salvar Credenciais & Chave PIX')
                     ),
 
                     /* BLOCO: ENTENDA SUA SEGURANÇA (PARA LEIGOS) */
