@@ -332,7 +332,7 @@
             // --- ESTADO PARA VISUALIZAÇÃO DE DOCUMENTOS ---
             const [viewingItem, setViewingItem] = React.useState(null);
 
-            // --- LÓGICA DE DIAGNÓSTICO ---
+            // --- LÓGICA DE DIAGNÓSTICO E MANUTENÇÃO (ATUALIZADA) ---
             const [isScanning, setIsScanning] = React.useState(true);
             const [scanResult, setScanResult] = React.useState({
                 db: 'pendente',
@@ -341,6 +341,9 @@
                 latency: '...'
             });
             const [lastScan, setLastScan] = React.useState(null);
+            
+            // Novo Estado para o Alerta de Manutenção
+            const [showMaintenanceAlert, setShowMaintenanceAlert] = React.useState(false);
 
             // Helper para obter a coleção isolada por UserId (Cofre Digital)
             const getIsolatedCollection = (name) => {
@@ -367,11 +370,14 @@
                         results.db = 'operacional';
                     } catch (e) {
                         results.db = (e.message === 'timeout' || e.code === 'unavailable') ? 'modo offline' : 'conectado';
+                        // Se houver erro de conexão, sugere manutenção
+                        if (e.message === 'timeout') setShowMaintenanceAlert(true);
                     }
                     results.auth = firebase.auth().currentUser ? 'autenticado' : 'anónimo';
                     results.modules = (typeof React !== 'undefined') ? 'estável' : 'falha';
                 } catch (err) {
                     console.error("Erro no diagnóstico:", err);
+                    setShowMaintenanceAlert(true); // Ativa o alerta em caso de erro
                 }
 
                 const end = performance.now();
@@ -386,6 +392,7 @@
             const hardAppReset = async () => {
                 if (confirm("Limpar cache e forçar atualização? Isso recarregará o sistema.")) {
                     try {
+                        localStorage.setItem('lastMaintenanceCheck', Date.now().toString()); // Atualiza a data da manutenção
                         if ('serviceWorker' in navigator) {
                             const registrations = await navigator.serviceWorker.getRegistrations();
                             for (let reg of registrations) { await reg.unregister(); }
@@ -410,8 +417,28 @@
                         try { await firebase.auth().signInAnonymously(); } catch(e) {}
                     }
                 });
+                
+                // LÓGICA DO ALARME DE MANUTENÇÃO (A CADA 15 DIAS OU ERRO)
+                const lastCheck = localStorage.getItem('lastMaintenanceCheck');
+                const fifteenDays = 15 * 24 * 60 * 60 * 1000;
+                const now = Date.now();
+
+                if (!lastCheck || (now - parseInt(lastCheck) > fifteenDays)) {
+                    setShowMaintenanceAlert(true);
+                }
+
+                // Captura erros globais para sugerir manutenção
+                const handleGlobalError = () => setShowMaintenanceAlert(true);
+                window.addEventListener('error', handleGlobalError);
+                window.addEventListener('unhandledrejection', handleGlobalError);
+
                 runDiagnostic();
-                return () => unsubscribeAuth();
+                
+                return () => {
+                    unsubscribeAuth();
+                    window.removeEventListener('error', handleGlobalError);
+                    window.removeEventListener('unhandledrejection', handleGlobalError);
+                };
             }, []);
 
             React.useEffect(() => {
@@ -913,6 +940,23 @@
                     onClose: () => setViewingRecibo(null)
                 }),
 
+                // ALERTA DE MANUTENÇÃO AUTOMÁTICO (NOVO)
+                showMaintenanceAlert && React.createElement('div', { className: 'fixed bottom-4 right-4 z-[9999] bg-red-600 text-white p-6 rounded-xl shadow-2xl border-4 border-white animate-bounce md:animate-none md:hover:scale-105 transition-transform max-w-sm' },
+                    React.createElement('div', { className: 'flex justify-between items-start mb-2' },
+                        React.createElement('h3', { className: 'font-black text-lg uppercase flex items-center gap-2' },
+                            React.createElement('span', { className: 'text-2xl' }, '🛠️'), 'Manutenção Necessária'
+                        ),
+                        React.createElement('button', { onClick: () => setShowMaintenanceAlert(false), className: 'text-white hover:text-gray-200 text-xl font-bold' }, '×')
+                    ),
+                    React.createElement('p', { className: 'text-sm font-medium mb-4' },
+                        'Olá! Para garantir que o sistema continue rápido e sem erros, é hora de realizar uma limpeza preventiva ou foi detectado um erro técnico.'
+                    ),
+                    React.createElement('button', { 
+                        onClick: hardAppReset,
+                        className: 'w-full bg-white text-red-600 font-bold py-3 rounded-lg shadow hover:bg-gray-100 uppercase tracking-wide text-xs'
+                    }, 'Realizar Manutenção Agora')
+                ),
+
                 printPreviewData && React.createElement('div', { 
                     id: 'printable-content',
                     className: 'fixed inset-0 bg-white z-50 overflow-auto p-8'
@@ -1352,7 +1396,6 @@
                 )
                 ),
 
-                // INQUILINOS
                 activeTab === 'tenants' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '👥 Inquilinos'),
@@ -1414,7 +1457,6 @@
                 )
                 ),
 
-                // IMÓVEIS
                 activeTab === 'properties' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '🏠 Imóveis'),
@@ -1455,10 +1497,12 @@
                         React.createElement(FormSelect, { label: 'Situação', options: ['Disponível', 'Alugado', 'Reforma', 'Venda'], name: 'situacao' })
                     ),
                     React.createElement('div', { className: 'flex gap-4 mt-6' },
-                        React.createElement('button', { 
-                            onClick: () => handleSaveData('imoveis', setShowPropertyForm), 
-                            className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' 
-                        }, editingId ? '💾 Atualizar Imóvel' : '💾 Salvar Imóvel'),
+                        (
+                            React.createElement('button', { 
+                                onClick: () => handleSaveData('imoveis', setShowPropertyForm), 
+                                className: 'flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-6 py-3 rounded-lg font-bold shadow hover:shadow-lg transition' 
+                            }, editingId ? '💾 Atualizar Imovel' : '💾 Salvar Imovel')
+                        ),
                         React.createElement('button', { onClick: () => cancelEditing(setShowPropertyForm), className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition' }, 'Cancelar')
                     )
                 ),
@@ -1476,7 +1520,6 @@
                 )
                 ),
 
-                // FINANCEIRO
                 activeTab === 'finance' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '💰 Financeiro'),
@@ -1510,7 +1553,7 @@
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
                         React.createElement(FormSelect, { label: 'Tipo de Transação', options: ['Receita (Entrada)', 'Despesa (Saída)'], name: 'tipo' }),
-                        React.createElement(FormInput, { label: 'Descrição (Ex: Aluguel do João)', placeholder: 'Ex: Aluguel Apto 101', name: 'descricao' }),
+                        React.createElement(FormInput, { label: 'Descrição', placeholder: 'Ex: Aluguel Apto 101', name: 'descricao' }),
                         React.createElement(FormInput, { label: 'Valor (R$)', placeholder: '0,00', type: 'number', name: 'valor' }),
                         React.createElement(FormInput, { label: 'Data', type: 'date', name: 'data' }),
                         React.createElement(FormSelect, { label: 'Categoria', options: ['Aluguel', 'Condomínio', 'IPTU', 'Manutenção', 'Taxa Adm'], name: 'categoria' }),
@@ -1546,7 +1589,6 @@
                 )
                 ),
 
-                // CONTRATOS
                 activeTab === 'contracts' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '📄 Contratos'),
@@ -1614,7 +1656,6 @@
                 )
                 ),
 
-                // ESPÓLIOS
                 activeTab === 'estate' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '💼 Gestão de Espólios'),
@@ -1851,7 +1892,31 @@
                 )
                 ),
 
-                // DOCUMENTOS
+                activeTab === 'alerts' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
+                React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '🔔 Avisos e Notificações'),
+                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-6' },
+                    React.createElement('div', { className: 'bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-red-100' }, 'Urgentes'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-black shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-yellow-900 font-semibold' }, 'Pendentes'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    ),
+                    React.createElement('div', { className: 'bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg' },
+                    React.createElement('div', { className: 'text-sm text-green-100' }, 'Resolvidos'),
+                    React.createElement('div', { className: 'text-4xl font-bold mt-2' }, '0')
+                    )
+                ),
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
+                    React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-6' }, '📋 Lista de Avisos'),
+                    React.createElement('div', { className: 'text-center text-gray-500 p-8' },
+                    React.createElement('div', { className: 'text-4xl mb-2' }, '🔔'),
+                    React.createElement('p', null, 'Nenhum aviso pendente')
+                    )
+                )
+                ),
+
                 activeTab === 'documents' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'flex items-center justify-between' },
                     React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '📄 Gestão de Documentos'),
@@ -1920,7 +1985,6 @@
                 )
                 ),
 
-                // SITUAÇÃO
                 activeTab === 'situation' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '📋 Situação Geral'),
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
@@ -1961,12 +2025,12 @@
                 )
                 ),
 
-                // CONFIGURAÇÕES
                 activeTab === 'config' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
                 React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '⚙️ Configurações'),
+
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
                     
-                    /* BLOCO DE CADASTRO DE LOGIN E SENHA - ATUALIZADO */
+                    /* BLOCO DE CADASTRO DE LOGIN E SENHA - ATUALIZADO (ROADMAP) */
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
                         React.createElement('div', { className: 'flex items-center gap-3 mb-6' },
                             React.createElement('span', { className: 'text-2xl' }, '🔐'),
@@ -2000,6 +2064,7 @@
                                     className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-yellow-500 outline-none transition-all'
                                 })
                             ),
+                            // NOVA ENTRADA DE PIX (ROADMAP)
                             React.createElement('div', null,
                                 React.createElement('label', { className: 'block text-sm font-black text-gray-700 mb-2 uppercase' }, 'Sua Chave PIX'),
                                 React.createElement('input', { 
@@ -2017,7 +2082,7 @@
                         React.createElement('button', { 
                             onClick: handleSaveCredentials,
                             className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-gray-900 transition shadow-lg'
-                        }, 'Salvar Credenciais & Chave PIX')
+                        }, 'Salvar Credenciais e PIX')
                     ),
 
                     /* BLOCO: ENTENDA SUA SEGURANÇA (PARA LEIGOS) */
@@ -2042,6 +2107,7 @@
                         )
                     ),
 
+                    // NOVO: Card de Diagnóstico (SUBSTITUI PERFIL)
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                     React.createElement('div', { className: 'flex items-center justify-between mb-4' },
                         React.createElement('h3', { className: 'text-xl font-bold text-gray-800' }, '🛡️ Saúde do Sistema'),
@@ -2080,6 +2146,8 @@
                         )
                     )
                     ),
+
+                    // MELHORADO: Card de Sistema
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600' },
                     React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🔧 Sistema'),
                     React.createElement('div', { className: 'space-y-4' },
@@ -2097,6 +2165,7 @@
                         )
                     )
                     ),
+
                     // Card de Manutenção (COM BOTÃO DE HARD RESET)
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
                         React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-4' }, '🛠️ Manutenção'),
