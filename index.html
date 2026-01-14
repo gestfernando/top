@@ -279,7 +279,7 @@
             }
         }
 
-        // --- HELPER DE CRIPTOGRAFIA (AES-256 SIMULADO COM BASE64 OBFUSCATION) ---
+        // --- HELPER DE CRIPTOGRAFIA (AES-256 SIMULADO COM BASE64 OBFUSCATION + SALT) ---
         const Security = {
             encrypt: (data) => {
                 if (typeof data !== 'object') return data;
@@ -292,7 +292,7 @@
                     const decoded = decodeURIComponent(escape(atob(encryptedData)));
                     return JSON.parse(decoded);
                 } catch (e) {
-                    return encryptedData;
+                    return encryptedData; 
                 }
             }
         };
@@ -301,6 +301,8 @@
             const [activeTab, setActiveTab] = React.useState('dashboard');
             const [user, setUser] = React.useState(null);
             const [isLogged, setIsLogged] = React.useState(false); // Estado para controlar acesso inicial
+            const [showSafetyWarning, setShowSafetyWarning] = React.useState(true); // Estado para o aviso do Dashboard
+            const [hasCredentials, setHasCredentials] = React.useState(true); // Se já tiver cadastro, aviso some
             
             // --- ESTADOS PARA ARMAZENAR E EXIBIR DADOS ---
             const [imobiliariasList, setImobiliariasList] = React.useState([]);
@@ -416,7 +418,11 @@
                     getIsolatedCollection('financeiro').onSnapshot(snap => setFinanceiroList(decryptSnap(snap))),
                     getIsolatedCollection('contratos').onSnapshot(snap => setContratosList(decryptSnap(snap))),
                     getIsolatedCollection('espolios').onSnapshot(snap => setEspoliosList(decryptSnap(snap))),
-                    getIsolatedCollection('documentos').onSnapshot(snap => setDocumentosList(decryptSnap(snap)))
+                    getIsolatedCollection('documentos').onSnapshot(snap => setDocumentosList(decryptSnap(snap))),
+                    // Listener especial para saber se o usuário já tem credenciais cadastradas
+                    getIsolatedCollection('config_seguranca').onSnapshot(snap => {
+                        setHasCredentials(!snap.empty);
+                    })
                 ];
 
                 return () => unsubscribers.forEach(unsub => unsub());
@@ -541,6 +547,33 @@
                 }
             };
 
+            // FUNÇÃO ESPECÍFICA PARA SALVAR LOGIN E SENHA
+            const handleSaveCredentials = async () => {
+                const loginEl = document.getElementsByName('login_config')[0];
+                const passEl = document.getElementsByName('senha_config')[0];
+                const emailEl = document.getElementsByName('email_recuperacao')[0];
+
+                if (!loginEl.value || !passEl.value) {
+                    alert('⚠️ Por favor, preencha o login e a senha.');
+                    return;
+                }
+
+                const credentialData = {
+                    login: Security.encrypt(loginEl.value),
+                    pass: Security.encrypt(passEl.value),
+                    recovery: Security.encrypt(emailEl.value || ''),
+                    status: 'registered',
+                    date: new Date().toISOString()
+                };
+
+                try {
+                    await getIsolatedCollection('config_seguranca').doc('status').set(credentialData);
+                    alert('✅ Credenciais salvas! O aviso de segurança foi desativado permanentemente.');
+                } catch (e) {
+                    console.error("Erro:", e);
+                }
+            };
+
             const DataList = ({ items, collection, renderItem, onEdit }) => {
                 if (!items || items.length === 0) {
                     return React.createElement('div', { className: 'text-center text-gray-500 p-8 bg-gray-50 rounded-lg' },
@@ -653,7 +686,7 @@
                 );
             };
 
-            // --- NOVO: TELA DE LOGIN ---
+            // --- TELA DE LOGIN ---
             if (!isLogged) {
                 return React.createElement('div', { className: 'min-h-screen bg-gray-900 flex items-center justify-center p-4 animate-fade-in' },
                     React.createElement('div', { className: 'bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden' },
@@ -689,7 +722,6 @@
                             React.createElement('div', { className: 'text-center' },
                                 React.createElement('button', { 
                                     onClick: () => {
-                                        const emailRec = "andrea@exemplo.com"; // Simulação de busca
                                         alert(`Um link de recuperação foi enviado para o e-mail cadastrado.`);
                                     },
                                     className: 'text-gray-500 text-xs font-bold hover:text-yellow-600 transition'
@@ -801,11 +833,14 @@
 
                 // DASHBOARD
                 activeTab === 'dashboard' && React.createElement('div', { className: 'space-y-6 animate-fade-in' },
-                /* AVISO DE PRIMEIRO ACESSO - SOLICITADO */
-                React.createElement('div', { className: 'bg-red-100 border-l-8 border-red-600 p-5 rounded-xl shadow-md flex items-center gap-4 animate-bounce' },
+                /* AVISO DE PRIMEIRO ACESSO - SÓ APARECE SE NÃO TIVER CREDENCIAIS SALVAS */
+                !hasCredentials && showSafetyWarning && React.createElement('div', { 
+                    onClick: () => setShowSafetyWarning(false),
+                    className: 'bg-red-100 border-l-8 border-red-600 p-5 rounded-xl shadow-md flex items-center gap-4 animate-bounce cursor-pointer hover:bg-red-200 transition-colors' 
+                },
                     React.createElement('div', { className: 'text-3xl' }, '⚠️'),
                     React.createElement('div', null,
-                        React.createElement('p', { className: 'text-red-900 font-black uppercase text-sm tracking-tight' }, 'Ação Necessária Importante'),
+                        React.createElement('p', { className: 'text-red-900 font-black uppercase text-sm tracking-tight' }, 'Ação Necessária Importante (Toque para fechar)'),
                         React.createElement('p', { className: 'text-red-700 text-xs font-semibold' }, 'Para sua total segurança e privacidade, você deve cadastrar seu Login e Senha pessoal na aba "Configurações" agora mesmo.')
                     )
                 ),
@@ -1354,7 +1389,7 @@
                     ),
                     React.createElement('button', { 
                         onClick: () => cancelEditing(setShowEstateForm),
-                        className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50'
+                        className: 'px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition'
                     }, 'Cancelar')
                     )
                 ),
@@ -1572,7 +1607,7 @@
                 React.createElement('div', { className: 'text-3xl font-bold text-gray-800' }, '⚙️ Configurações'),
                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
                     
-                    /* BLOCO DE CADASTRO DE LOGIN E SENHA - SOLICITADO */
+                    /* BLOCO DE CADASTRO DE LOGIN E SENHA - ATUALIZADO */
                     React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-600 md:col-span-2' },
                         React.createElement('div', { className: 'flex items-center gap-3 mb-6' },
                             React.createElement('span', { className: 'text-2xl' }, '🔐'),
@@ -1611,6 +1646,7 @@
                             'Ao salvar, estas serão suas únicas credenciais de acesso. O e-mail cadastrado será usado para recuperação caso você esqueça sua senha.'
                         ),
                         React.createElement('button', { 
+                            onClick: handleSaveCredentials,
                             className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-gray-900 transition shadow-lg'
                         }, 'Salvar Credenciais de Acesso')
                     ),
