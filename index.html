@@ -146,6 +146,7 @@
             
             const [firstAccessMode, setFirstAccessMode] = React.useState(false);
             const [tempPassword, setTempPassword] = React.useState('');
+            const [tempLoginUser, setTempLoginUser] = React.useState('');
 
             const [imobiliariasList, setImobiliariasList] = React.useState([]);
             const [inquilinosList, setInquilinosList] = React.useState([]);
@@ -243,6 +244,7 @@
 
                     if (!regDoc.exists) {
                         setTempPassword(passInput);
+                        setTempLoginUser(loginInput);
                         setFirstAccessMode(true);
                         return;
                     }
@@ -262,7 +264,7 @@
             };
             
             const confirmFirstAccess = async () => {
-                const loginInput = document.getElementById('login_field').value.trim();
+                const loginInput = tempLoginUser;
                 const passInput = tempPassword;
 
                 const data = { 
