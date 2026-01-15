@@ -308,6 +308,7 @@
             const [showSafetyWarning, setShowSafetyWarning] = React.useState(true); // Estado para o aviso do Dashboard
             const [hasCredentials, setHasCredentials] = React.useState(false); 
             const [storedCredentials, setStoredCredentials] = React.useState(null);
+            const [loginMode, setLoginMode] = React.useState('login'); // 'login' ou 'register'
             
             // --- ESTADOS PARA COBRANÇA ---
             const [userPixKey, setUserPixKey] = React.useState('');
@@ -587,36 +588,49 @@
                 } catch (error) { console.error("Erro ao salvar:", error); }
             };
 
+            // --- FIX: SALVAMENTO DE CREDENCIAIS CORRIGIDO ---
             const handleSaveCredentials = async () => {
-                const loginEl = document.getElementsByName('login_config')[0];
-                const passEl = document.getElementsByName('senha_config')[0];
-                const emailEl = document.getElementsByName('email_recuperacao')[0];
+                // Captura os dados dos elementos visíveis (Cadastro ou Configuração)
+                const loginEl = document.getElementsByName('login_config')[0] || document.getElementsByName('login_config_reg')[0];
+                const passEl = document.getElementsByName('senha_config')[0] || document.getElementsByName('senha_config_reg')[0];
+                const emailEl = document.getElementsByName('email_recuperacao')[0] || document.getElementsByName('email_recuperacao_reg')[0];
                 const pixEl = document.getElementsByName('pix_config')[0];
 
-                if (!loginEl.value || !passEl.value) { alert('⚠️ Preencha o login e a senha.'); return; }
+                if (!loginEl || !loginEl.value || !passEl || !passEl.value) {
+                    alert('⚠️ Por favor, preencha o login e a senha.');
+                    return;
+                }
+
+                const loginValue = loginEl.value.trim();
 
                 const credentialData = {
-                    login: loginEl.value,
+                    login: Security.encrypt(loginValue),
                     pass: Security.encrypt(passEl.value),
-                    recovery: Security.encrypt(emailEl.value || ''),
-                    pix: Security.encrypt(pixEl ? pixEl.value : userPixKey),
+                    recovery: Security.encrypt(emailEl ? emailEl.value : ''),
+                    pix: Security.encrypt(pixEl ? pixEl.value : (userPixKey || '')),
                     status: 'registered',
                     date: new Date().toISOString()
                 };
 
                 try {
+                    // Gravação direta usando o padrão de identidade para não depender de isLogged
                     await firebase.firestore()
                         .collection('artifacts')
                         .doc(APP_ID_STABLE)
                         .collection('public')
                         .doc('data')
-                        .collection(`${loginEl.value}_config_seguranca`)
+                        .collection(`${loginValue}_config_seguranca`)
                         .doc('status')
                         .set({ payload: Security.encrypt(credentialData) });
                     
-                    setUserLogin(loginEl.value);
-                    alert('✅ Credenciais salvas com sucesso!');
-                } catch (e) { alert("Erro ao salvar."); }
+                    setUserLogin(loginValue);
+                    setIsLogged(true);
+                    localStorage.setItem('gm_fernando_login', loginValue);
+                    alert('✅ Chaves de acesso salvas e sincronizadas!');
+                } catch (e) {
+                    console.error("Erro ao salvar:", e);
+                    alert("Erro ao conectar com o servidor para salvar credenciais.");
+                }
             };
 
             const handlePerformLogin = async () => {
@@ -742,15 +756,27 @@
                         React.createElement('div', { className: 'bg-black p-8 text-center border-b-4 border-yellow-500' },
                             React.createElement('img', { src: 'https://cdn-icons-png.flaticon.com/512/18484/18484449.png', className: 'w-20 h-20 mx-auto mb-4' }),
                             React.createElement('h1', { className: 'text-2xl font-black text-yellow-500 uppercase tracking-tighter' }, 'GESTÃO MASTER'),
-                            React.createElement('p', { className: 'text-yellow-600 text-xs font-bold' }, !hasCredentials ? 'PRIMEIRO ACESSO' : 'Controle Administrativo Profissional')
+                            React.createElement('p', { className: 'text-yellow-600 text-xs font-bold' }, loginMode === 'register' ? 'CONFIGURAÇÃO DE PRIMEIRO ACESSO' : 'Controle Administrativo Profissional')
                         ),
-                        !hasCredentials ? (
+                        loginMode === 'register' ? (
                             React.createElement('div', { className: 'p-8 space-y-4' },
                                 React.createElement('p', { className: 'text-xs text-gray-500 font-bold text-center' }, 'Crie suas chaves de segurança abaixo para sincronizar seus dados.'),
-                                React.createElement(FormInput, { label: 'Definir Login', name: 'login_config' }),
-                                React.createElement(FormInput, { label: 'Definir Senha', type: 'password', name: 'senha_config' }),
-                                React.createElement(FormInput, { label: 'E-mail Recuperação', name: 'email_recuperacao' }),
-                                React.createElement('button', { onClick: handleSaveCredentials, className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase shadow-lg' }, 'Finalizar Configuração')
+                                React.createElement('div', null,
+                                    React.createElement('label', { className: 'block text-[10px] font-black text-gray-700 uppercase mb-1' }, 'Definir Login'),
+                                    React.createElement('input', { type: 'text', name: 'login_config_reg', placeholder: 'Ex: admin', className: 'w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:border-yellow-500 outline-none' })
+                                ),
+                                React.createElement('div', null,
+                                    React.createElement('label', { className: 'block text-[10px] font-black text-gray-700 uppercase mb-1' }, 'Definir Senha'),
+                                    React.createElement('input', { type: 'password', name: 'senha_config_reg', placeholder: '••••••••', className: 'w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:border-yellow-500 outline-none' })
+                                ),
+                                React.createElement('div', null,
+                                    React.createElement('label', { className: 'block text-[10px] font-black text-gray-700 uppercase mb-1' }, 'E-mail Recuperação'),
+                                    React.createElement('input', { type: 'email', name: 'email_recuperacao_reg', placeholder: 'seu@email.com', className: 'w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:border-yellow-500 outline-none' })
+                                ),
+                                React.createElement('button', { onClick: handleSaveCredentials, className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase shadow-lg mt-4' }, 'Finalizar Configuração'),
+                                React.createElement('div', { className: 'text-center' },
+                                    React.createElement('button', { onClick: () => setLoginMode('login'), className: 'text-gray-500 text-xs font-bold' }, 'JÁ TENHO CADASTRO')
+                                )
                             )
                         ) : (
                             React.createElement('div', { className: 'p-8 space-y-6' },
@@ -767,8 +793,9 @@
                                     React.createElement('label', { htmlFor: 'remember_check', className: 'text-xs font-bold text-gray-600 uppercase' }, 'Lembrar meus dados')
                                 ),
                                 React.createElement('button', { onClick: handlePerformLogin, className: 'w-full bg-black text-yellow-500 py-4 rounded-xl font-black uppercase shadow-lg' }, 'Entrar no Sistema'),
-                                React.createElement('div', { className: 'text-center' },
-                                    React.createElement('button', { onClick: handleForgotPassword, className: 'text-gray-500 text-xs font-bold' }, 'ESQUECI MINHA SENHA')
+                                React.createElement('div', { className: 'text-center space-y-4' },
+                                    React.createElement('button', { onClick: handleForgotPassword, className: 'text-gray-500 text-xs font-bold block w-full' }, 'ESQUECI MINHA SENHA'),
+                                    React.createElement('button', { onClick: () => setLoginMode('register'), className: 'text-yellow-600 text-xs font-black' }, 'PRIMEIRO ACESSO? CADASTRE-SE')
                                 )
                             )
                         ),
